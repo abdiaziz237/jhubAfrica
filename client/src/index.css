@@ -1,0 +1,60 @@
+/* Modern CSS Reset */
+:root {
+  --primary-color: #4285f4;
+  --secondary-color: #34a853;
+  --error-color: #ea4335;
+  --font-main: 'Inter', -apple-system, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+/* Layout System */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+  margin-top: 0;
+  line-height: 1.2;
+}
+
+code {
+  font-family: 'Fira Code', Menlo, Monaco, Consolas, 'Courier New', monospace;
+  background-color: #f1f3f5;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* Links */
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--secondary-color);
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }

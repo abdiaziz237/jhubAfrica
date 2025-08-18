@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/assets/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="JHUB Africa - Innovation Hub Platform" />
+  
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="JHUB Africa">
+  <meta name="description" content="Technology and Innovation Hub Platform">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jhub.africa/">
+  <meta property="og:title" content="JHUB Africa">
+  <meta property="og:description" content="Technology and Innovation Hub Platform">
+  <meta property="og:image" content="%PUBLIC_URL%/assets/social-preview.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://jhub.africa/">
+  <meta property="twitter:title" content="JHUB Africa">
+  <meta property="twitter:description" content="Technology and Innovation Hub Platform">
+  <meta property="twitter:image" content="%PUBLIC_URL%/assets/social-preview.png">
+
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <title>JHUB Africa - Innovation Hub</title>
+
+  <!-- Preload critical resources -->
+  <link rel="preload" href="%PUBLIC_URL%/assets/fonts/Inter.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-warning">
+      <h1>JavaScript Required</h1>
+      <p>This application requires JavaScript to function properly. Please enable JavaScript in your browser settings.</p>
+    </div>
+  </noscript>
+  <div id="root"></div>
+  
+  <!-- Production analytics snippet (example) -->
+  <% if (process.env.NODE_ENV === 'production') { %>
+  <script>
+    window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+    ga('create', 'UA-XXXXX-Y', 'auto');
+    ga('send', 'pageview');
+  </script>
+  <script async src='https://www.google-analytics.com/analytics.js'></script>
+  <% } %>
+</body>
+</html>

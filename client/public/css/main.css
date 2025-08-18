@@ -1,0 +1,31 @@
+/* Core Styles */
+:root {
+  --primary: #4a6bff;
+  --secondary: #00c897;
+  --dark: #1a1a2e;
+  --light: #f5f5f5;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--light);
+}
+
+header {
+  background-color: var(--dark);
+  padding: 1rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+#app-content {
+  min-height: 80vh;
+  padding: 2rem;
+}

@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-audit.json",
+    "files": [
+        {
+            "date": 1755343340114,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-16.log",
+            "hash": "cdb91b996aa244ccc70997a0f3604352ca67afe59320f4c55d04b5a3caacb30b"
+        },
+        {
+            "date": 1755378605278,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-17.log",
+            "hash": "d8f844fd4f960fe3af9f6da84790832ca476027a90fb6bc5167c2ef0746c34de"
+        }
+    ],
+    "hashType": "sha256"
+}

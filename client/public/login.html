@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JHUB Africa - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #003399;
+            --secondary-color: #0055ff;
+            --accent-color: #00d084;
+            --light-bg: #f4f5f6;
+            --dark-text: #000a1f;
+            --error-color: #e63946;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .auth-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            margin: 20px;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .auth-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .auth-header p {
+            color: #666;
+        }
+        
+        .auth-logo {
+            width: 80px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 85, 255, 0.1);
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .input-icon {
+            position: relative;
+        }
+        
+        .input-icon i {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .forgot-password {
+            text-align: right;
+            margin-top: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .forgot-password a {
+            color: #666;
+            font-size: 14px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-password a:hover {
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <img src="images/logo.png" alt="JHUB Africa" class="auth-logo">
+            <h1>Welcome Back</h1>
+            <p>Login to continue your learning journey</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                <div class="error-message" id="emailError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-icon">
+                    <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                    <i class="fas fa-eye" id="togglePassword"></i>
+                </div>
+                <div class="error-message" id="passwordError"></div>
+                <div class="forgot-password">
+                    <a href="forgot-password.html">Forgot password?</a>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn" id="loginBtn">
+                <span id="btnText">Login</span>
+                <span id="btnSpinner" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Processing...
+                </span>
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            Don't have an account? <a href="register.html">Sign Up</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuration
+            const API_BASE_URL = 'http://localhost:5000'; // Update this if your backend is elsewhere
+            const DEBUG_MODE = true; // Set to false in production
+            
+            // DOM Elements
+            const loginForm = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const togglePassword = document.getElementById('togglePassword');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const emailError = document.getElementById('emailError');
+            const passwordError = document.getElementById('passwordError');
+            
+            // Toggle password visibility
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.classList.toggle('fa-eye-slash');
+            });
+            
+            // Form submission
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Reset errors
+                emailError.style.display = 'none';
+                passwordError.style.display = 'none';
+                
+                // Get form values
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                
+                // Validate inputs
+                if (!validateEmail(email)) {
+                    emailError.textContent = 'Please enter a valid email address';
+                    emailError.style.display = 'block';
+                    return;
+                }
+                
+                if (!password) {
+                    passwordError.textContent = 'Please enter your password';
+                    passwordError.style.display = 'block';
+                    return;
+                }
+                
+                // Start login process
+                setLoadingState(true);
+                
+                try {
+                    if (DEBUG_MODE) console.log('Attempting login with:', { email, password });
+                    
+                    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    if (DEBUG_MODE) console.log('Response status:', response.status);
+                    
+                    const data = await response.json().catch(() => ({}));
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || `Login failed with status ${response.status}`);
+                    }
+                    
+                    if (!data.token) {
+                        throw new Error('No authentication token received');
+                    }
+                    
+                    // Store token and redirect
+                    localStorage.setItem('authToken', data.token);
+                    
+                    if (DEBUG_MODE) {
+                        console.log('Login successful, token stored:', data.token);
+                        console.log('Redirecting to dashboard...');
+                    }
+                    
+                    window.location.href = 'dashboard.html';
+                    
+                } catch (error) {
+                    if (DEBUG_MODE) console.error('Login error:', error);
+                    
+                    // Handle specific error cases
+                    if (error.message.includes('Failed to fetch')) {
+                        passwordError.textContent = 'Unable to connect to server. Please check your connection.';
+                    } else if (error.message.includes('401')) {
+                        passwordError.textContent = 'Invalid email or password';
+                    } else {
+                        passwordError.textContent = error.message || 'Login failed. Please try again.';
+                    }
+                    
+                    passwordError.style.display = 'block';
+                    
+                } finally {
+                    setLoadingState(false);
+                }
+            });
+            
+            // Helper functions
+            function validateEmail(email) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            }
+            
+            function setLoadingState(isLoading) {
+                if (isLoading) {
+                    loginBtn.disabled = true;
+                    btnText.style.display = 'none';
+                    btnSpinner.style.display = 'inline';
+                } else {
+                    loginBtn.disabled = false;
+                    btnText.style.display = 'inline';
+                    btnSpinner.style.display = 'none';
+                }
+            }
+            
+            // Debugging helper
+            if (DEBUG_MODE) {
+                console.log('Login page initialized');
+                console.log('API Base URL:', API_BASE_URL);
+            }
+        });
+    </script>
+   
+<script src="/js/apiConnector.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+    
+    try {
+      const { token, user } = await api.login(email, password);
+      localStorage.setItem('token', token);
+      window.location.href = '/dashboard.html';
+    } catch (err) {
+      document.getElementById('error').textContent = err.message;
+    }
+  });
+</script>
+</body>
+</html>

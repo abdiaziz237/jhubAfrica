@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JHUB Africa - Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #003399;
+            --secondary-color: #0055ff;
+            --accent-color: #00d084;
+            --error-color: #ff4444;
+            --light-bg: #f4f5f6;
+            --dark-text: #000a1f;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .auth-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            margin: 20px;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .auth-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .auth-header p {
+            color: #666;
+        }
+        
+        .auth-logo {
+            width: 80px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .input-icon {
+            position: relative;
+        }
+        
+        .input-icon i {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .password-strength {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .strength-weak {
+            color: var(--error-color);
+        }
+        
+        .strength-medium {
+            color: orange;
+        }
+        
+        .strength-strong {
+            color: var(--accent-color);
+        }
+        
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <img src="images/logo.png" alt="JHUB Africa" class="auth-logo">
+            <h1>Create Your Account</h1>
+            <p>Start your learning journey and earn rewards</p>
+        </div>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" class="form-control" placeholder="Enter your full name" required>
+                <div class="error-message" id="nameError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                <div class="error-message" id="emailError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-icon">
+                    <input type="password" id="password" class="form-control" placeholder="Create a password" required minlength="8">
+                    <i class="fas fa-eye" id="togglePassword"></i>
+                </div>
+                <div class="password-strength" id="passwordStrength"></div>
+                <div class="error-message" id="passwordError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="input-icon">
+                    <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+                    <i class="fas fa-eye" id="toggleConfirmPassword"></i>
+                </div>
+                <div class="error-message" id="confirmPasswordError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="referralCode">Referral Code (Optional)</label>
+                <input type="text" id="referralCode" class="form-control" placeholder="Enter referral code if any">
+            </div>
+            
+            <button type="submit" class="btn" id="registerButton">Register Now</button>
+        </form>
+        
+        <div class="auth-footer">
+            Already have an account? <a href="login.html">Sign In</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const registerForm = document.getElementById('registerForm');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const referralCodeInput = document.getElementById('referralCode');
+            const registerButton = document.getElementById('registerButton');
+
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                togglePasswordVisibility(passwordInput, this);
+            });
+
+            document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+                togglePasswordVisibility(confirmPasswordInput, this);
+            });
+
+            passwordInput.addEventListener('input', function() {
+                checkPasswordStrength(this.value);
+            });
+
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                resetErrors();
+
+                const name = nameInput.value.trim();
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const referralCode = referralCodeInput.value.trim();
+
+                let isValid = true;
+
+                if (name === '') {
+                    showError('nameError', 'Please enter your full name');
+                    isValid = false;
+                }
+
+                if (!validateEmail(email)) {
+                    showError('emailError', 'Please enter a valid email address');
+                    isValid = false;
+                }
+
+                if (password.length < 8) {
+                    showError('passwordError', 'Password must be at least 8 characters');
+                    isValid = false;
+                }
+
+                if (password !== confirmPassword) {
+                    showError('confirmPasswordError', 'Passwords do not match');
+                    isValid = false;
+                }
+
+                if (isValid) {
+                    try {
+                        registerButton.disabled = true;
+                        registerButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+
+                        const response = await fetch('http://localhost:5000/api/auth/register', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name,
+                                email,
+                                password,
+                                confirmPassword,
+                                referralCode
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Registration failed');
+                        }
+
+                        // Successful registration - redirect to login
+                        window.location.href = 'login.html?registered=true';
+                        
+                    } catch (error) {
+                        showError('emailError', error.message || 'Registration failed. Please try again.');
+                    } finally {
+                        registerButton.disabled = false;
+                        registerButton.innerHTML = 'Register Now';
+                    }
+                }
+            });
+
+            function togglePasswordVisibility(input, icon) {
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                icon.classList.toggle('fa-eye-slash');
+            }
+
+            function checkPasswordStrength(password) {
+                const strengthElement = document.getElementById('passwordStrength');
+                let strength = 0;
+
+                if (password.length >= 8) strength++;
+                if (password.length >= 12) strength++;
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+                if (password.length === 0) {
+                    strengthElement.textContent = '';
+                } else if (strength <= 2) {
+                    strengthElement.textContent = 'Weak password';
+                    strengthElement.className = 'password-strength strength-weak';
+                } else if (strength <= 4) {
+                    strengthElement.textContent = 'Medium strength';
+                    strengthElement.className = 'password-strength strength-medium';
+                } else {
+                    strengthElement.textContent = 'Strong password';
+                    strengthElement.className = 'password-strength strength-strong';
+                }
+            }
+
+            function validateEmail(email) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            }
+
+            function showError(elementId, message) {
+                const element = document.getElementById(elementId);
+                element.textContent = message;
+                element.style.display = 'block';
+            }
+
+            function resetErrors() {
+                document.querySelectorAll('.error-message').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+        });
+    </script>
+  
+<script src="/js/apiConnector.js"></script>
+<script>
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    };
+
+    try {
+      await JHubAPI.register(formData);
+      alert('Registration successful! Please login.');
+      window.location.href = '/login.html';
+    } catch (error) {
+      document.getElementById('error-message').textContent = error.message;
+    }
+  });
+</script>
+</body>
+</html> 
