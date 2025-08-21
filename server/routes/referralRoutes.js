@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewares/auth');
+const { authenticate } = require('../middlewares/auth'); // ✅ Correct import
 const User = require('../models/user');
 
-// @route GET /api/auth/referrals
+// @route GET /api/referrals
 // @desc  Get referrals made by logged-in user
 // @access Private
-router.get('/', auth, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {  // ✅ Use authenticate function
   try {
     const currentUser = await User.findById(req.user.id);
 
@@ -29,6 +29,7 @@ router.get('/', auth, async (req, res) => {
       }))
     });
   } catch (err) {
+    console.error('Referral error:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 });

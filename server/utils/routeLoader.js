@@ -1,29 +1,58 @@
+// // utils/routeLoader.js
+// const fs = require('fs');
+// const path = require('path');
+
+// function loadRoutes(app) {
+//   const routesPath = path.join(__dirname, '../routes');
+
+//   fs.readdirSync(routesPath).forEach((file) => {
+//     if (file.endsWith('.js')) {
+//       const route = require(path.join(routesPath, file));
+
+//       let routeName = file.replace('.js', '');
+
+//       // Map filenames → correct API prefixes
+//       const routeMap = {
+//         admin: '/api/v1/admin',
+//         auth: '/api/v1/auth',
+//         course: '/api/v1/courses',
+//         referral: '/api/v1/referrals'
+//       };
+
+//       const basePath = routeMap[routeName] || `/api/v1/${routeName}`;
+
+//       app.use(basePath, route);
+//       console.log(`✅ Route ${basePath} loaded`);
+//     }
+//   });
+// }
+
+// module.exports = loadRoutes;
+
+// utils/routeLoader.js
 const fs = require('fs');
 const path = require('path');
 
-const loadRoutes = (app) => {
-  // API routes
-  const routePath = path.join(__dirname, '../routes');
-  
-  fs.readdirSync(routePath).forEach(file => {
-    if (file.endsWith('.js')) {
-      try {
-        const route = require(path.join(routePath, file));
-        const routeName = file.split('.')[0];
-        
-        app.use(`/api/v1/${routeName}`, route);
-        console.log(`Route /api/v1/${routeName} loaded`.blue);
-      } catch (err) {
-        console.error(`Error loading route ${file}:`, err);
-        process.exit(1);
-      }
-    }
-  });
+module.exports = (app) => {
+  const routesPath = path.join(__dirname, '../routes');
+  const routeFiles = fs.readdirSync(routesPath);
 
-  // Frontend routes
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+  routeFiles.forEach((file) => {
+    if (file.endsWith('.js')) {
+      const route = require(path.join(routesPath, file));
+      const routeName = file.replace('.js', '');
+
+      let basePath = `/api/v1/${routeName}`;
+      // Special cases for naming consistency
+      if (routeName === 'courseRoutes') basePath = '/api/v1/courses';
+      if (routeName === 'adminRoutes') basePath = '/api/v1/admin';
+      if (routeName === 'authRoutes') basePath = '/api/v1/auth';
+      if (routeName === 'dashboardRoutes') basePath = '/api/v1/dashboard';
+      if (routeName === 'referralRoutes') basePath = '/api/v1/referrals';
+
+      app.use(basePath, route);
+      console.log(`Route ${basePath} loaded`);
+    }
   });
 };
 
-module.exports = loadRoutes;

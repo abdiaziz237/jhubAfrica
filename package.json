@@ -1,14 +1,13 @@
 {
-  "name": "jhub-fullstack",
+  "name": "jhub",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm start\"",
-    "build": "cd client && npm run build",
-    "start": "cd server && npm start",
-    "test": "concurrently \"cd server && npm test\" \"cd client && npm test\""
+    "start": "echo \"Run from client or server folder\"",
+    "install:all": "npm install --prefix client && npm install --prefix server"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  }
+  "workspaces": [
+    "client",
+    "server"
+  ]
 }

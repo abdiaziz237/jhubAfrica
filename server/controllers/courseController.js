@@ -1,232 +1,201 @@
 const Course = require('../models/Course');
-const User = require('../modelsuser');
+const User = require('../models/user');
 const { NotFoundError, ForbiddenError } = require('../utils/errors');
 
 module.exports = {
   /**
-   * @desc    Get all courses
-   * @route   GET /api/courses
+   * @desc    Get all courses (listing only, no content)
+   * @route   GET /api/v1/courses
    * @access  Public
    */
   async listCourses(req, res) {
     try {
       const { category, level, sort } = req.query;
-      
-      // Build query
+
       const query = {};
       if (category) query.category = category;
       if (level) query.level = level;
-      
-      // Build sort
+
       const sortOptions = {};
       if (sort === 'newest') sortOptions.createdAt = -1;
       if (sort === 'highest-rated') sortOptions.averageRating = -1;
-      
+
       const courses = await Course.find(query)
+        .select('-content') // don’t send course content in list
         .sort(sortOptions)
         .populate('instructor', 'name email avatar');
-      
+
       res.status(200).json({
         success: true,
         count: courses.length,
-        courses
+        courses,
       });
-      
     } catch (err) {
       console.error('List Courses Error:', err);
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch courses'
+        message: 'Failed to fetch courses',
       });
     }
   },
 
   /**
-   * @desc    Get single course
-   * @route   GET /api/courses/:id
-   * @access  Public
+   * @desc    Get full course content
+   * @route   GET /api/v1/courses/:id/content
+   * @access  Public (or Private later)
    */
-  async getCourse(req, res) {
+  async getCourseContent(req, res) {
     try {
       const course = await Course.findById(req.params.id)
         .populate('instructor', 'name email avatar')
         .populate('reviews.user', 'name avatar');
-      
+
       if (!course) {
         throw new NotFoundError('Course not found');
       }
-      
+
       res.status(200).json({
         success: true,
-        course
+        course,
       });
-      
     } catch (err) {
-      console.error('Get Course Error:', err);
+      console.error('Get Course Content Error:', err);
       if (err instanceof NotFoundError) {
         return res.status(404).json({
           success: false,
-          message: err.message
+          message: err.message,
         });
       }
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch course'
+        message: 'Failed to fetch course',
       });
     }
   },
 
   /**
    * @desc    Create course
-   * @route   POST /api/courses
+   * @route   POST /api/v1/courses
    * @access  Private/Instructor
    */
   async createCourse(req, res) {
     try {
-      // Verify instructor role
       if (req.user.role !== 'instructor' && req.user.role !== 'admin') {
         throw new ForbiddenError('Only instructors can create courses');
       }
-      
+
       const course = new Course({
         ...req.body,
-        instructor: req.user.id
+        instructor: req.user.id,
       });
-      
+
       await course.save();
-      
-      // Add course to instructor's profile
-      await User.findByIdAndUpdate(
-        req.user.id,
-        { $push: { coursesCreated: course._id } }
-      );
-      
+
+      await User.findByIdAndUpdate(req.user.id, {
+        $push: { coursesCreated: course._id },
+      });
+
       res.status(201).json({
         success: true,
-        course
+        course,
       });
-      
     } catch (err) {
       console.error('Create Course Error:', err);
       if (err instanceof ForbiddenError) {
         return res.status(403).json({
           success: false,
-          message: err.message
+          message: err.message,
         });
       }
       res.status(400).json({
         success: false,
         message: 'Failed to create course',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined,
       });
     }
   },
 
   /**
    * @desc    Update course
-   * @route   PUT /api/courses/:id
+   * @route   PUT /api/v1/courses/:id
    * @access  Private/Instructor
    */
   async updateCourse(req, res) {
     try {
       let course = await Course.findById(req.params.id);
-      
-      if (!course) {
-        throw new NotFoundError('Course not found');
-      }
-      
-      // Verify ownership or admin
-      if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+
+      if (!course) throw new NotFoundError('Course not found');
+
+      if (
+        course.instructor.toString() !== req.user.id &&
+        req.user.role !== 'admin'
+      ) {
         throw new ForbiddenError('Not authorized to update this course');
       }
-      
-      course = await Course.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true, runValidators: true }
-      );
-      
+
+      course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true,
+      });
+
       res.status(200).json({
         success: true,
-        course
+        course,
       });
-      
     } catch (err) {
       console.error('Update Course Error:', err);
       if (err instanceof NotFoundError) {
-        return res.status(404).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(404).json({ success: false, message: err.message });
       }
       if (err instanceof ForbiddenError) {
-        return res.status(403).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(403).json({ success: false, message: err.message });
       }
-      res.status(400).json({
-        success: false,
-        message: 'Failed to update course'
-      });
+      res.status(400).json({ success: false, message: 'Failed to update course' });
     }
   },
 
   /**
    * @desc    Delete course
-   * @route   DELETE /api/courses/:id
+   * @route   DELETE /api/v1/courses/:id
    * @access  Private/Instructor
    */
   async deleteCourse(req, res) {
     try {
       const course = await Course.findById(req.params.id);
-      
-      if (!course) {
-        throw new NotFoundError('Course not found');
-      }
-      
-      // Verify ownership or admin
-      if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+      if (!course) throw new NotFoundError('Course not found');
+
+      if (
+        course.instructor.toString() !== req.user.id &&
+        req.user.role !== 'admin'
+      ) {
         throw new ForbiddenError('Not authorized to delete this course');
       }
-      
+
       await course.remove();
-      
-      // Remove course from instructor's profile
-      await User.findByIdAndUpdate(
-        course.instructor,
-        { $pull: { coursesCreated: course._id } }
-      );
-      
+
+      await User.findByIdAndUpdate(course.instructor, {
+        $pull: { coursesCreated: course._id },
+      });
+
       res.status(200).json({
         success: true,
-        message: 'Course deleted successfully'
+        message: 'Course deleted successfully',
       });
-      
     } catch (err) {
       console.error('Delete Course Error:', err);
       if (err instanceof NotFoundError) {
-        return res.status(404).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(404).json({ success: false, message: err.message });
       }
       if (err instanceof ForbiddenError) {
-        return res.status(403).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(403).json({ success: false, message: err.message });
       }
-      res.status(500).json({
-        success: false,
-        message: 'Failed to delete course'
-      });
+      res.status(500).json({ success: false, message: 'Failed to delete course' });
     }
   },
 
   /**
    * @desc    Enroll in course
-   * @route   POST /api/courses/:id/enroll
+   * @route   POST /api/v1/courses/:id/enroll
    * @access  Private/Student
    */
   async enrollCourse(req, res) {
@@ -234,127 +203,79 @@ module.exports = {
       if (req.user.role !== 'student') {
         throw new ForbiddenError('Only students can enroll in courses');
       }
-      
+
       const course = await Course.findById(req.params.id);
-      
-      if (!course) {
-        throw new NotFoundError('Course not found');
-      }
-      
-      // Check if already enrolled
+      if (!course) throw new NotFoundError('Course not found');
+
       if (course.students.includes(req.user.id)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Already enrolled in this course'
-        });
+        return res
+          .status(400)
+          .json({ success: false, message: 'Already enrolled in this course' });
       }
-      
-      // Add student to course
+
       course.students.push(req.user.id);
       await course.save();
-      
-      // Add course to student's profile
-      await User.findByIdAndUpdate(
-        req.user.id,
-        { $push: { coursesEnrolled: course._id } }
-      );
-      
-      res.status(200).json({
-        success: true,
-        message: 'Enrolled successfully'
+
+      await User.findByIdAndUpdate(req.user.id, {
+        $push: { coursesEnrolled: course._id },
       });
-      
+
+      res.status(200).json({ success: true, message: 'Enrolled successfully' });
     } catch (err) {
       console.error('Enroll Course Error:', err);
       if (err instanceof NotFoundError) {
-        return res.status(404).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(404).json({ success: false, message: err.message });
       }
       if (err instanceof ForbiddenError) {
-        return res.status(403).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(403).json({ success: false, message: err.message });
       }
-      res.status(500).json({
-        success: false,
-        message: 'Failed to enroll in course'
-      });
+      res.status(500).json({ success: false, message: 'Failed to enroll' });
     }
   },
 
   /**
    * @desc    Add course review
-   * @route   POST /api/courses/:id/reviews
+   * @route   POST /api/v1/courses/:id/reviews
    * @access  Private/Student
    */
   async addReview(req, res) {
     try {
       const { rating, comment } = req.body;
-      
-      // Verify student role and enrollment
       const course = await Course.findById(req.params.id);
-      
-      if (!course) {
-        throw new NotFoundError('Course not found');
-      }
-      
+
+      if (!course) throw new NotFoundError('Course not found');
       if (!course.students.includes(req.user.id)) {
         throw new ForbiddenError('You must enroll before reviewing');
       }
-      
-      // Check if already reviewed
+
       const existingReview = course.reviews.find(
-        review => review.user.toString() === req.user.id
+        (r) => r.user.toString() === req.user.id
       );
-      
       if (existingReview) {
-        return res.status(400).json({
-          success: false,
-          message: 'Already reviewed this course'
-        });
+        return res
+          .status(400)
+          .json({ success: false, message: 'Already reviewed this course' });
       }
-      
-      // Add review
-      const review = {
-        user: req.user.id,
-        rating,
-        comment
-      };
-      
+
+      const review = { user: req.user.id, rating, comment };
       course.reviews.push(review);
-      
-      // Update average rating
-      course.averageRating = course.reviews.reduce((acc, item) => item.rating + acc, 0) / 
+
+      course.averageRating =
+        course.reviews.reduce((acc, r) => r.rating + acc, 0) /
         course.reviews.length;
-      
+
       await course.save();
-      
-      res.status(201).json({
-        success: true,
-        message: 'Review added successfully'
-      });
-      
+
+      res.status(201).json({ success: true, message: 'Review added' });
     } catch (err) {
       console.error('Add Review Error:', err);
       if (err instanceof NotFoundError) {
-        return res.status(404).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(404).json({ success: false, message: err.message });
       }
       if (err instanceof ForbiddenError) {
-        return res.status(403).json({
-          success: false,
-          message: err.message
-        });
+        return res.status(403).json({ success: false, message: err.message });
       }
-      res.status(500).json({
-        success: false,
-        message: 'Failed to add review'
-      });
+      res.status(500).json({ success: false, message: 'Failed to add review' });
     }
-  }
+  },
 };

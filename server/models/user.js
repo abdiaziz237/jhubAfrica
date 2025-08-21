@@ -22,7 +22,7 @@ const SECURITY = {
 // Prevent model overwrite in case of hot-reloading
 if (mongoose.models.user) {
   delete mongoose.models.user;
-  delete mongoose.modelSchemas.user;
+  // delete mongoose.modelSchemas.user;
 }
 
 const userSchema = new mongoose.Schema({
@@ -45,7 +45,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     trim: true,
     lowercase: true,
     validate: {
@@ -81,7 +80,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     uppercase: true,
-    unique: true,
     default: function() {
       const namePart = this.name.split(' ')[0].toUpperCase().substring(0, 4);
       const uuidPart = uuidv4().replace(/-/g, '').substring(0, 6);

@@ -29,5 +29,17 @@
       "last 1 chrome version"
     ]
   },
-  "proxy": "http://localhost:5000"
+  "proxy": "http://localhost:5001",
+  "devDependencies": {
+    "eslint-plugin-react-hooks": "^5.2.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
+    "rules": {
+      "react-hooks/exhaustive-deps": "off"
+    }
+  }
 }

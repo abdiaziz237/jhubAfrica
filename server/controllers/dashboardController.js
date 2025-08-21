@@ -1,62 +1,65 @@
-// server/controllers/dashboardController.js
+// controllers/dashboardController.js
 const User = require('../models/user');
 const Course = require('../models/Course');
+// const ActivityLog = require('../models/ActivityLog'); // if you track user/course activity logs
 
-module.exports = {
-  async getDashboardStats(req, res) {
+const dashboardController = {
+  /**
+   * @route   GET /api/v1/admin/dashboard/stats
+   * @desc    Get high-level system stats
+   * @access  Admin only
+   */
+  async getStats(req, res, next) {
     try {
-      if (req.user.role !== 'admin') {
-        return res.status(403).json({ 
-          success: false,
-          message: 'Access denied' 
-        });
-      }
+      const stats = {
+        users: await User.countDocuments(),
+        courses: await Course.countDocuments(),
+        activeCourses: await Course.countDocuments({ status: 'active' }),
+        uptime: process.uptime()
+      };
 
-      const totalUsers = await User.countDocuments();
-      const activeUsers = await User.countDocuments({ lastLogin: { $gte: new Date(Date.now() - 30*24*60*60*1000) } });
-      const totalCourses = await Course.countDocuments();
-      const newCourses = await Course.countDocuments({ createdAt: { $gte: new Date(Date.now() - 7*24*60*60*1000) } });
-
-      res.json({
-        success: true,
-        data: {
-          totalUsers,
-          activeUsers,
-          totalCourses,
-          newCourses
-        }
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        success: false,
-        message: error.message 
-      });
+      res.json({ success: true, data: stats });
+    } catch (err) {
+      next(err);
     }
   },
 
-  async getUserActivity(req, res) {
+  /**
+   * @route   GET /api/v1/admin/dashboard/activity
+   * @desc    Get recent system activity (audit trail, logins, course updates, etc.)
+   * @access  Admin only
+   */
+  async getActivity(req, res, next) {
     try {
-      if (req.user.role !== 'admin') {
-        return res.status(403).json({ 
-          success: false,
-          message: 'Access denied' 
-        });
-      }
+      const { page = 1, limit = 20, type, userId } = req.query;
 
-      const users = await User.find()
-        .sort({ lastLogin: -1 })
-        .limit(10)
-        .select('name email role lastLogin');
+      const filter = {};
+      if (type) filter.type = type;
+      if (userId) filter.user = userId;
+
+      // Assuming you have an ActivityLog model (adjust if you store logs differently)
+      const activities = await ActivityLog.find(filter)
+        .populate('user', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(Number(limit))
+        .skip((page - 1) * Number(limit));
+
+      const count = await ActivityLog.countDocuments(filter);
 
       res.json({
         success: true,
-        data: users
+        data: activities,
+        pagination: {
+          total: count,
+          page: +page,
+          limit: +limit,
+          totalPages: Math.ceil(count / limit)
+        }
       });
-    } catch (error) {
-      res.status(500).json({ 
-        success: false,
-        message: error.message 
-      });
+    } catch (err) {
+      next(err);
     }
   }
 };
+
+module.exports = dashboardController;

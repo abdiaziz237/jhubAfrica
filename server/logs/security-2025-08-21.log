@@ -1,0 +1,4 @@
+{"level":"info","message":"Security event occurred","metadata":{"count":1,"eventType":"AUTH_MISSING_TOKEN","ip":"::1","path":"/auth/login","severity":"info"},"timestamp":"2025-08-21 15:28:49"}
+{"level":"info","message":"Security event occurred","metadata":{"count":2,"eventType":"AUTH_MISSING_TOKEN","ip":"::1","path":"/auth/login","severity":"info"},"timestamp":"2025-08-21 15:29:54"}
+{"level":"info","message":"Security event occurred","metadata":{"count":3,"eventType":"AUTH_MISSING_TOKEN","ip":"::1","path":"/auth/login","severity":"info"},"timestamp":"2025-08-21 15:29:56"}
+{"level":"info","message":"Security event occurred","metadata":{"count":4,"eventType":"AUTH_MISSING_TOKEN","ip":"::1","path":"/auth/login","severity":"info"},"timestamp":"2025-08-21 15:29:57"}

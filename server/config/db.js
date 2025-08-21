@@ -3,37 +3,41 @@ const colors = require('colors');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      retryWrites: true,
-      w: 'majority'
+    // Clean connection using latest mongoose defaults
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,  // 10s timeout
+      socketTimeoutMS: 45000,           // 45s timeout for idle sockets
+      maxPoolSize: 10,                  // max DB connections in pool
     });
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`.cyan.underline);
+    console.log(
+      `✅ MongoDB Connected: ${conn.connection.host}`.cyan.underline
+    );
   } catch (error) {
-    console.error(`Error: ${error.message}`.red.bold);
-    process.exit(1);
+    console.error(`❌ Error: ${error.message}`.red.bold);
+
+    // Don't kill the server if DB is unavailable
+    console.log('⚠️  Server running without database connection'.yellow);
   }
 };
 
+// Extra event listeners for mongoose connection state
 mongoose.connection.on('connected', () => {
-  console.log('Mongoose connected to DB'.green.bold);
+  console.log('🔗 Mongoose connected to DB'.green.bold);
 });
 
 mongoose.connection.on('error', (err) => {
-  console.log(`Mongoose connection error: ${err.message}`.red.bold);
+  console.log(`💥 Mongoose connection error: ${err.message}`.red.bold);
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('Mongoose disconnected'.yellow.bold);
+  console.log('⚠️  Mongoose disconnected'.yellow.bold);
 });
 
+// Graceful shutdown
 process.on('SIGINT', async () => {
   await mongoose.connection.close();
+  console.log('🔌 Mongoose connection closed due to app termination'.yellow);
   process.exit(0);
 });
 
