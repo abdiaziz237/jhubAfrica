@@ -167,7 +167,7 @@
 <body>
     <div class="auth-container">
         <div class="auth-header">
-            <img src="images/logo.png" alt="JHUB Africa" class="auth-logo">
+            <img src="../assets/images/logo.png" alt="JHUB Africa" class="auth-logo">
             <h1>Create Your Account</h1>
             <p>Start your learning journey and earn rewards</p>
         </div>
@@ -276,7 +276,7 @@
                         registerButton.disabled = true;
                         registerButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
 
-                        const response = await fetch('http://localhost:5000/api/auth/register', {
+                        const response = await fetch('http://localhost:5001/api/auth/register', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -377,4 +377,4 @@
   });
 </script>
 </body>
-</html> 
+</html>

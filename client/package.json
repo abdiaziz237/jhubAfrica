@@ -16,7 +16,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.1",
-    "react-scripts": "5.0.1",
     "web-vitals": "^5.1.0"
   },
   "browserslist": {
@@ -31,7 +30,14 @@
   },
   "proxy": "http://localhost:5001",
   "devDependencies": {
-    "eslint-plugin-react-hooks": "^5.2.0"
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.6.1",
+    "babel-loader": "^10.0.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "html-webpack-plugin": "^5.6.4",
+    "react-scripts": "^5.0.1",
+    "source-map-loader": "^5.0.0",
+    "webpack": "^5.101.3",
+    "webpack-dev-server": "^5.2.2"
   },
   "eslintConfig": {
     "extends": [

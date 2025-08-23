@@ -22,7 +22,6 @@ const SECURITY = {
 // Prevent model overwrite in case of hot-reloading
 if (mongoose.models.user) {
   delete mongoose.models.user;
-  // delete mongoose.modelSchemas.user;
 }
 
 const userSchema = new mongoose.Schema({
@@ -56,7 +55,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [8, 'Password must be at least 8 characters'],
-    select: false,
+    // select: false, // <-- REMOVED
     validate: {
       validator: function(v) {
         return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/.test(v);
@@ -66,13 +65,8 @@ const userSchema = new mongoose.Schema({
   },
   passwordConfirm: {
     type: String,
-    required: [true, 'Please confirm your password'],
-    validate: {
-      validator: function(el) {
-        return el === this.password;
-      },
-      message: 'Passwords do not match'
-    }
+    required: [true, 'Please confirm your password']
+    
   },
 
   // Referral System
@@ -210,7 +204,6 @@ userSchema.pre('save', async function(next) {
 
   try {
     this.password = await bcrypt.hash(this.password, 12);
-    this.passwordConfirm = undefined;
     this.lastPasswordChange = Date.now();
     next();
   } catch (err) {
@@ -220,6 +213,11 @@ userSchema.pre('save', async function(next) {
     });
     next(new Error('Failed to secure password'));
   }
+});
+
+// Remove passwordConfirm after validation
+userSchema.post('validate', function(doc) {
+  doc.passwordConfirm = undefined;
 });
 
 // Update password changed timestamp

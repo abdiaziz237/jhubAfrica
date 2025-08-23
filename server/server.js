@@ -188,7 +188,7 @@ app.use(errorHandler);
 // =======================
 // 13. Server initialization
 // =======================
-const PORT = 5001; // fixed port
+const PORT = process.env.PORT || 5002; // use environment variable or default to 5002
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
   console.log(`✅ Health: http://localhost:${PORT}/api/health`);

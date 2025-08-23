@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
-const API_BASE_URL = "http://localhost:5001"; // change in production
+const API_BASE_URL = "http://localhost:5001";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -11,42 +12,130 @@ export default function Dashboard() {
     achievements: 0,
     referrals: 0,
   });
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [recommendedCourses, setRecommendedCourses] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      window.location.href = "/login";
+      navigate("/login");
       return;
     }
 
-    // Fetch user info
-    fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Unauthorized");
-        return res.json();
-      })
-      .then((data) => {
-        setUser(data);
-        setStats({
-          points: data.points || 1250,
-          courses: data.courses?.length || 3,
-          achievements: data.achievements?.length || 2,
-          referrals: data.referrals || 5,
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch user info
+        const userRes = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-      })
-      .catch((err) => {
+        
+        if (!userRes.ok) throw new Error("Unauthorized");
+        const userData = await userRes.json();
+        
+        setUser(userData);
+        setStats({
+          points: userData.points || 1250,
+          courses: userData.courses?.length || 3,
+          achievements: userData.achievements?.length || 2,
+          referrals: userData.referrals || 5,
+        });
+
+        // Fetch enrolled courses
+        try {
+          const coursesRes = await fetch(`${API_BASE_URL}/api/v1/course/enrolled`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (coursesRes.ok) {
+            const coursesData = await coursesRes.json();
+            setEnrolledCourses(coursesData.data || []);
+          }
+        } catch (err) {
+          console.log("Could not fetch enrolled courses:", err);
+        }
+
+        // Fetch recommended courses
+        try {
+          const recommendedRes = await fetch(`${API_BASE_URL}/api/v1/course?limit=3`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (recommendedRes.ok) {
+            const recommendedData = await recommendedRes.json();
+            setRecommendedCourses(recommendedData.data || []);
+          }
+        } catch (err) {
+          console.log("Could not fetch recommended courses:", err);
+        }
+
+        // Mock recent activity data
+        setRecentActivity([
+          {
+            id: 1,
+            type: "course_completed",
+            title: "Course Completed",
+            description: "IC3 Digital Literacy",
+            points: 250,
+            time: "2 hours ago",
+            icon: "fas fa-book"
+          },
+          {
+            id: 2,
+            type: "achievement",
+            title: "Achievement Unlocked",
+            description: "First Course Completed",
+            points: 100,
+            time: "1 day ago",
+            icon: "fas fa-trophy"
+          },
+          {
+            id: 3,
+            type: "referral",
+            title: "Friend Referred",
+            description: "John Doe joined JHUB",
+            points: 50,
+            time: "3 days ago",
+            icon: "fas fa-user-plus"
+          }
+        ]);
+        
+      } catch (err) {
         console.error(err);
         localStorage.removeItem("authToken");
-        window.location.href = "/login";
-      });
-  }, []);
+        navigate("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
-    window.location.href = "/login";
+    navigate("/login");
   };
+
+  const getProgressPercentage = (course) => {
+    return course.progress || Math.floor(Math.random() * 100);
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading your dashboard...</p>
+      </div>
+    );
+  }
 
   const initials =
     user?.name
@@ -126,59 +215,234 @@ export default function Dashboard() {
         <div className="main-content">
           {/* Welcome Banner */}
           <div className="welcome-banner">
-            <h1>
-              Welcome back, {user?.name ? user.name.split(" ")[0] : "Loading"}!
-            </h1>
-            <p>Continue your learning journey and earn more points today</p>
+            <div className="welcome-content">
+              <h1>
+                {getGreeting()}, {user?.name ? user.name.split(" ")[0] : "Student"}! 👋
+              </h1>
+              <p>Continue your learning journey and unlock new achievements</p>
+              <div className="quick-actions">
+                <button className="action-btn primary" onClick={() => navigate('/courses')}>
+                  <i className="fas fa-book"></i>
+                  Browse Courses
+                </button>
+                <button className="action-btn secondary" onClick={() => navigate('/profile')}>
+                  <i className="fas fa-user"></i>
+                  View Profile
+                </button>
+              </div>
+            </div>
+            <div className="welcome-illustration">
+              <div className="progress-ring">
+                <div className="progress-text">
+                  <span className="level">Level {Math.floor(stats.points / 500) + 1}</span>
+                  <span className="xp">{stats.points} XP</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Stats Grid */}
           <div className="stats-grid">
-            <div className="stat-card">
-              <i className="fas fa-bolt"></i>
-              <h3>{stats.points.toLocaleString()} XP</h3>
-              <p>Total Points Earned</p>
+            <div className="stat-card points">
+              <div className="stat-icon">
+                <i className="fas fa-bolt"></i>
+              </div>
+              <div className="stat-content">
+                <h3>{stats.points.toLocaleString()}</h3>
+                <p>Total XP Earned</p>
+                <div className="stat-trend">+125 this week</div>
+              </div>
             </div>
 
-            <div className="stat-card">
-              <i className="fas fa-book"></i>
-              <h3>{stats.courses}</h3>
-              <p>Courses Enrolled</p>
+            <div className="stat-card courses">
+              <div className="stat-icon">
+                <i className="fas fa-book"></i>
+              </div>
+              <div className="stat-content">
+                <h3>{stats.courses}</h3>
+                <p>Courses Enrolled</p>
+                <div className="stat-trend">{enrolledCourses.filter(c => getProgressPercentage(c) < 100).length} in progress</div>
+              </div>
             </div>
 
-            <div className="stat-card">
-              <i className="fas fa-trophy"></i>
-              <h3>{stats.achievements}</h3>
-              <p>Achievements Unlocked</p>
+            <div className="stat-card achievements">
+              <div className="stat-icon">
+                <i className="fas fa-trophy"></i>
+              </div>
+              <div className="stat-content">
+                <h3>{stats.achievements}</h3>
+                <p>Achievements</p>
+                <div className="stat-trend">2 more to unlock</div>
+              </div>
             </div>
 
-            <div className="stat-card">
-              <i className="fas fa-users"></i>
-              <h3>{stats.referrals}</h3>
-              <p>Friends Referred</p>
+            <div className="stat-card referrals">
+              <div className="stat-icon">
+                <i className="fas fa-users"></i>
+              </div>
+              <div className="stat-content">
+                <h3>{stats.referrals}</h3>
+                <p>Friends Referred</p>
+                <div className="stat-trend">Earn 50 XP per referral</div>
+              </div>
             </div>
           </div>
 
-          {/* Recent Activity (static demo for now) */}
-          <div className="activity-section">
-            <div className="section-header">
-              <h2>Recent Activity</h2>
-              <a href="/activity">View All</a>
+          {/* Dashboard Content Grid */}
+          <div className="dashboard-grid">
+            {/* Current Courses */}
+            <div className="dashboard-section current-courses">
+              <div className="section-header">
+                <h2>Continue Learning</h2>
+                <button className="view-all-btn" onClick={() => navigate('/my-courses')}>
+                  View All
+                </button>
+              </div>
+              
+              <div className="courses-list">
+                {enrolledCourses.length > 0 ? (
+                  enrolledCourses.slice(0, 3).map((course) => {
+                    const progress = getProgressPercentage(course);
+                    return (
+                      <div key={course._id} className="course-progress-card">
+                        <div className="course-info">
+                          <h4>{course.title}</h4>
+                          <p>{course.instructor?.name || 'Unknown Instructor'}</p>
+                        </div>
+                        <div className="progress-section">
+                          <div className="progress-bar">
+                            <div 
+                              className="progress-fill" 
+                              style={{ width: `${progress}%` }}
+                            ></div>
+                          </div>
+                          <span className="progress-text">{progress}%</span>
+                        </div>
+                        <button className="continue-btn">
+                          {progress === 100 ? 'Review' : 'Continue'}
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="empty-state">
+                    <i className="fas fa-book-open"></i>
+                    <p>No courses enrolled yet</p>
+                    <button className="enroll-btn" onClick={() => navigate('/courses')}>
+                      Browse Courses
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <ul className="activity-list">
-              <li className="activity-item">
-                <div className="activity-icon">
-                  <i className="fas fa-book"></i>
+            {/* Recommended Courses */}
+            <div className="dashboard-section recommended-courses">
+              <div className="section-header">
+                <h2>Recommended for You</h2>
+                <button className="view-all-btn" onClick={() => navigate('/courses')}>
+                  View All
+                </button>
+              </div>
+              
+              <div className="recommended-list">
+                {recommendedCourses.slice(0, 3).map((course) => (
+                  <div key={course._id} className="recommended-card">
+                    <div className="course-thumbnail">
+                      {course.image ? (
+                        <img src={course.image} alt={course.title} />
+                      ) : (
+                        <div className="placeholder-thumbnail">
+                          <i className="fas fa-play"></i>
+                        </div>
+                      )}
+                    </div>
+                    <div className="course-details">
+                      <h4>{course.title}</h4>
+                      <p>{course.instructor?.name || 'Unknown Instructor'}</p>
+                      <div className="course-meta">
+                        <span className="duration">
+                          <i className="fas fa-clock"></i>
+                          {course.duration || '4 weeks'}
+                        </span>
+                        <span className="level">
+                          <i className="fas fa-signal"></i>
+                          {course.level || 'Beginner'}
+                        </span>
+                      </div>
+                    </div>
+                    <button className="enroll-recommended-btn">
+                      Enroll
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="dashboard-section activity-section">
+              <div className="section-header">
+                <h2>Recent Activity</h2>
+                <button className="view-all-btn">
+                  View All
+                </button>
+              </div>
+
+              <div className="activity-list">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="activity-item">
+                    <div className="activity-icon">
+                      <i className={activity.icon}></i>
+                    </div>
+                    <div className="activity-content">
+                      <h4 className="activity-title">{activity.title}</h4>
+                      <p className="activity-desc">{activity.description}</p>
+                      <p className="activity-time">{activity.time}</p>
+                    </div>
+                    <div className="activity-points">+{activity.points} XP</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="dashboard-section quick-stats">
+              <div className="section-header">
+                <h2>This Week</h2>
+              </div>
+              
+              <div className="weekly-stats">
+                <div className="weekly-stat">
+                  <div className="stat-value">12h 30m</div>
+                  <div className="stat-label">Time Spent Learning</div>
                 </div>
-                <div className="activity-content">
-                  <h4 className="activity-title">Course Completed</h4>
-                  <p className="activity-desc">IC3 Digital Literacy</p>
-                  <p className="activity-time">2 hours ago</p>
+                <div className="weekly-stat">
+                  <div className="stat-value">8</div>
+                  <div className="stat-label">Lessons Completed</div>
                 </div>
-                <div className="activity-points">+250 XP</div>
-              </li>
-            </ul>
+                <div className="weekly-stat">
+                  <div className="stat-value">3</div>
+                  <div className="stat-label">Streak Days</div>
+                </div>
+              </div>
+              
+              <div className="achievement-preview">
+                <h3>Next Achievement</h3>
+                <div className="achievement-card">
+                  <i className="fas fa-fire"></i>
+                  <div>
+                    <h4>7-Day Streak</h4>
+                    <p>Complete lessons for 7 days in a row</p>
+                    <div className="achievement-progress">
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: '43%' }}></div>
+                      </div>
+                      <span>3/7 days</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,9 @@
 const User = require('../models/user');
 const { logSecurityEvent } = require('../utils/securityLogger');
-const { sendEmail } = require('../services/emailService');
+const emailService = require('../services/emailService');
 const { generatePasswordResetToken } = require('../services/authService');
+
+const sendEmail = emailService.sendEmail;
 
 const userController = {
   // List all users (admin only)

@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Password Reset Successful - JHUB Africa</title>
+  <title>Verify Your Email - JHUB Africa</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,11 +19,21 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     h1 {
-      color: #16a34a;
+      color: #2d3748;
     }
     p {
       color: #4a5568;
       line-height: 1.6;
+    }
+    .btn {
+      display: inline-block;
+      background: #2563eb;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      margin: 20px 0;
+      font-weight: bold;
     }
     .footer {
       margin-top: 30px;
@@ -35,10 +45,12 @@
 </head>
 <body>
   <div class="container">
-    <h1>Password Changed Successfully ✅</h1>
-    <p>Hello,</p>
-    <p>Your JHUB Africa account password was successfully updated. If you did this, you don’t need to take any further action.</p>
-    <p>If this wasn’t you, please <strong>reset your password immediately</strong> or contact our support team.</p>
+    <h1>Welcome to JHUB Africa 🚀</h1>
+    <p>Hi there,</p>
+    <p>Thanks for signing up! Please confirm your email address to activate your account.</p>
+    <a href="{{verificationUrl}}" class="btn">Verify Email</a>
+    <p>If the button doesn’t work, copy and paste this link into your browser:</p>
+    <p>{{verificationUrl}}</p>
     <div class="footer">
       <p>© {{year}} JHUB Africa. All rights reserved.</p>
     </div>

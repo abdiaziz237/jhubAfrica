@@ -9,6 +9,10 @@ router.post('/login', authController.login);
 router.get('/verify-email', authController.verifyEmail);
 router.post('/resend-verification', authController.resendVerification);
 
+// ✅ Forgot/Reset Password routes
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
+
 // Protected routes
 router.get('/me', authenticate, authController.getMe);
 router.put('/update-profile', authenticate, authController.updateProfile);

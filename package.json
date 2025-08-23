@@ -9,5 +9,8 @@
   "workspaces": [
     "client",
     "server"
-  ]
+  ],
+  "dependencies": {
+    "nodemailer-express-handlebars": "^7.0.0"
+  }
 }

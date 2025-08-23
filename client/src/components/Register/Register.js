@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import "./Register.css";
 
+const API_BASE_URL = "http://localhost:5002"; // change for production
+
 const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    passwordConfirm: "",
     referralCode: "",
+    role: "student",
   });
 
   const [errors, setErrors] = useState({});
@@ -50,8 +53,8 @@ const Register = () => {
       newErrors.email = "Please enter a valid email address";
     if (formData.password.length < 8)
       newErrors.password = "Password must be at least 8 characters";
-    if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
+    if (formData.password !== formData.passwordConfirm)
+      newErrors.passwordConfirm = "Passwords do not match";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -60,10 +63,10 @@ const Register = () => {
 
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5001/api/v1/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData), // matches backend schema
       });
 
       const data = await response.json();
@@ -133,31 +136,35 @@ const Register = () => {
             ></i>
           </div>
           {passwordStrength && (
-            <div className={`password-strength strength-${passwordStrength.toLowerCase()}`}>
+            <div
+              className={`password-strength strength-${passwordStrength.toLowerCase()}`}
+            >
               {passwordStrength} password
             </div>
           )}
-          {errors.password && <div className="error-message">{errors.password}</div>}
+          {errors.password && (
+            <div className="error-message">{errors.password}</div>
+          )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password</label>
+          <label htmlFor="passwordConfirm">Confirm Password</label>
           <div className="input-icon">
             <input
               type="password"
-              id="confirmPassword"
+              id="passwordConfirm"
               className="form-control"
               placeholder="Confirm your password"
-              value={formData.confirmPassword}
+              value={formData.passwordConfirm}
               onChange={handleChange}
             />
             <i
               className="fas fa-eye"
-              onClick={() => togglePasswordVisibility("confirmPassword")}
+              onClick={() => togglePasswordVisibility("passwordConfirm")}
             ></i>
           </div>
-          {errors.confirmPassword && (
-            <div className="error-message">{errors.confirmPassword}</div>
+          {errors.passwordConfirm && (
+            <div className="error-message">{errors.passwordConfirm}</div>
           )}
         </div>
 
@@ -171,6 +178,19 @@ const Register = () => {
             value={formData.referralCode}
             onChange={handleChange}
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="role">Role</label>
+          <select
+            id="role"
+            className="form-control"
+            value={formData.role}
+            onChange={handleChange}
+          >
+            <option value="student">Student</option>
+            <option value="instructor">Instructor</option>
+          </select>
         </div>
 
         <button type="submit" className="btn" disabled={loading}>

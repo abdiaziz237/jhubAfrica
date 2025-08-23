@@ -42,12 +42,12 @@ module.exports = (app) => {
       const route = require(path.join(routesPath, file));
       const routeName = file.replace('.js', '');
 
-      let basePath = `/api/v1/${routeName}`;
+      let basePath = `/api/v1/${routeName.replace('Routes', '')}`;
       // Special cases for naming consistency
-      if (routeName === 'courseRoutes') basePath = '/api/v1/courses';
-      if (routeName === 'adminRoutes') basePath = '/api/v1/admin';
-      if (routeName === 'authRoutes') basePath = '/api/v1/auth';
-      if (routeName === 'dashboardRoutes') basePath = '/api/v1/dashboard';
+      if (routeName === 'course') basePath = '/api/v1/courses';
+      if (routeName === 'admin') basePath = '/api/v1/admin';
+      if (routeName === 'auth') basePath = '/api/v1/auth';
+      if (routeName === 'dashboard') basePath = '/api/v1/dashboard';
       if (routeName === 'referralRoutes') basePath = '/api/v1/referrals';
 
       app.use(basePath, route);

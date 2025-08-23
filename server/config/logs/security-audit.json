@@ -1,0 +1,40 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-audit.json",
+    "files": [
+        {
+            "date": 1755343340114,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-16.log",
+            "hash": "cdb91b996aa244ccc70997a0f3604352ca67afe59320f4c55d04b5a3caacb30b"
+        },
+        {
+            "date": 1755378605278,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-17.log",
+            "hash": "d8f844fd4f960fe3af9f6da84790832ca476027a90fb6bc5167c2ef0746c34de"
+        },
+        {
+            "date": 1755554027688,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-19.log",
+            "hash": "cf1ebda9f53864a7e04b936a29a320bba8313465b19eec46f50c023ca9bf5440"
+        },
+        {
+            "date": 1755641154100,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-20.log",
+            "hash": "ef75dbbfc3a5e03ee2be368afd394cb5aac2eec30b9070c00e00653ce5932885"
+        },
+        {
+            "date": 1755735580538,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-21.log",
+            "hash": "f0bf5a02a125013b213a671ffc515014a43a2d0b84a1df92b23abf219eefafe9"
+        },
+        {
+            "date": 1755848553922,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-08-22.log",
+            "hash": "4ddd462ccdf1d83fba33bd6f5ec436a99764e4c467e4ee5da08de79069158c91"
+        }
+    ],
+    "hashType": "sha256"
+}

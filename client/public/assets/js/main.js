@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'https://api.jhubafrica.com/v1';
+const API_BASE_URL = 'http://localhost:5001/api';
 let authToken = localStorage.getItem('authToken');
 
 // Common Functions

@@ -1,7 +1,7 @@
 // public/js/apiConnector.js
 class JHubAPI {
   constructor() {
-    this.baseUrl = '/api';
+    this.baseUrl = 'http://localhost:5001/api';
     this.defaultHeaders = {
       'Content-Type': 'application/json'
     };
