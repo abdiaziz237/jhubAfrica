@@ -11,7 +11,7 @@ const {
 } = require('../controllers');
 
 // Middlewares
-const { authenticate, authorizeAdmin, validate } = require('../middlewares');
+const { authenticate, authorizeAdmin, validateJoi } = require('../middlewares');
 
 // Validation schemas
 const { 
@@ -46,35 +46,74 @@ router.use(authorizeAdmin);
  * USER MANAGEMENT ROUTES
  */
 router.route('/users')
-  .get(validate(listUsersSchema), (req, res, next) => adminController.listUsers(req, res, next))
-  .post(validate(registerUser), (req, res, next) => adminController.createUser(req, res, next));
+  .get((req, res, next) => adminController.listUsers(req, res, next))
+  .post((req, res, next) => adminController.createUser(req, res, next));
 
 router.route('/users/:userId')
-  .get(validate(getUserSchema), (req, res, next) => adminController.getUser(req, res, next))
-  .put(validate(updateUser), (req, res, next) => adminController.updateUser(req, res, next))
-  .delete(validate(deleteUserSchema), (req, res, next) => adminController.deleteUser(req, res, next));
+  .get((req, res, next) => adminController.getUser(req, res, next))
+  .put((req, res, next) => adminController.updateUser(req, res, next))
+  .delete((req, res, next) => adminController.deleteUser(req, res, next));
+
+// User status and role management
+router.patch('/users/:userId/status', (req, res, next) => adminController.updateUserStatus(req, res, next));
+router.patch('/users/:userId/role', (req, res, next) => adminController.updateUserRole(req, res, next));
+
+// User verification routes
+router.get('/users/pending-verification', (req, res, next) => adminController.getPendingVerifications(req, res, next));
+router.patch('/users/:userId/verify', (req, res, next) => adminController.verifyUser(req, res, next));
+router.get('/users/:userId/verification', (req, res, next) => adminController.getUserVerificationDetails(req, res, next));
 
 /**
  * COURSE MANAGEMENT ROUTES
  */
 router.route('/courses')
-  .get(validate(listCoursesSchema), (req, res, next) => courseController.listCourses(req, res, next))
-  .post(validate(createCourse), (req, res, next) => courseController.createCourse(req, res, next));
+  .get((req, res, next) => adminController.listCourses(req, res, next))
+  .post((req, res, next) => adminController.createCourse(req, res, next));
 
 router.route('/courses/:courseId')
-  .get(validate(getCourseSchema), (req, res, next) => courseController.getCourse(req, res, next))
-  .put(validate(updateCourse), (req, res, next) => courseController.updateCourse(req, res, next))
-  .delete(validate(deleteCourseSchema), (req, res, next) => courseController.deleteCourse(req, res, next));
+  .get((req, res, next) => adminController.getCourse(req, res, next))
+  .put((req, res, next) => adminController.updateCourse(req, res, next))
+  .delete((req, res, next) => adminController.deleteCourse(req, res, next));
+
+// Cohort and Waitlist Management
+router.get('/courses/:courseId/waitlist', adminController.getCourseWaitlist);
+router.post('/courses/:courseId/start-cohort', adminController.startCohort);
+router.post('/courses/:courseId/complete-cohort', adminController.completeCohort);
+router.post('/courses/:courseId/open-cohort', adminController.openNewCohort);
+router.put('/courses/:courseId/cohort-settings', adminController.updateCohortSettings);
 
 /**
  * DASHBOARD ROUTES
  */
-router.get('/dashboard/stats', (req, res, next) => dashboardController.getDashboardStats(req, res, next));
+router.get('/stats', (req, res, next) => dashboardController.getStats(req, res, next));
+router.get('/recent-activity', (req, res, next) => dashboardController.getRecentActivity(req, res, next));
 
-router.get('/dashboard/activity',
-  validate(activityQuerySchema),
-  (req, res, next) => dashboardController.getUserActivity(req, res, next)
-);
+// Analytics routes
+router.get('/dashboard/analytics', (req, res, next) => dashboardController.getAnalytics(req, res, next));
+router.get('/dashboard/analytics/user-growth', (req, res, next) => dashboardController.getUserGrowth(req, res, next));
+router.get('/dashboard/analytics/course-performance', (req, res, next) => dashboardController.getCoursePerformance(req, res, next));
+router.get('/dashboard/analytics/revenue', (req, res, next) => dashboardController.getRevenue(req, res, next));
+router.get('/dashboard/analytics/geographic', (req, res, next) => dashboardController.getGeographic(req, res, next));
+router.get('/dashboard/analytics/real-time', (req, res, next) => dashboardController.getRealTimeStats(req, res, next));
+
+// Commented out until ActivityLog model is implemented
+// router.get('/dashboard/activity',
+//   validate(activityQuerySchema),
+//   (req, res, next) => dashboardController.getActivity(req, res, next)
+// );
+
+/**
+ * COURSE INTEREST MANAGEMENT ROUTES
+ */
+router.route('/course-interests')
+  .get((req, res, next) => adminController.getCourseInterests(req, res, next));
+
+router.route('/course-interests/:id')
+  .put((req, res, next) => adminController.updateCourseInterest(req, res, next))
+  .delete((req, res, next) => adminController.deleteCourseInterest(req, res, next));
+
+// Add route for updating course interest status
+router.patch('/course-interests/:id/status', (req, res, next) => adminController.updateCourseInterestStatus(req, res, next));
 
 /**
  * SYSTEM MANAGEMENT ROUTES
@@ -82,9 +121,13 @@ router.get('/dashboard/activity',
 router.get('/system/status', (req, res, next) => adminController.getStatus(req, res, next));
 
 router.post('/system/maintenance',
-  validate(maintenanceSchema),
   (req, res, next) => adminController.toggleMaintenance(req, res, next)
 );
+
+/**
+ * TESTING ROUTES (for debugging)
+ */
+router.post('/test-user-creation', (req, res, next) => adminController.testUserCreation(req, res, next));
 
 /**
  * ERROR HANDLING

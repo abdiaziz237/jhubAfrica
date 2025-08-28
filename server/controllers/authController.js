@@ -55,6 +55,8 @@ module.exports = {
         referredBy,
         emailVerificationToken,
         emailVerified: false,
+        status: 'pending',
+        verificationStatus: 'pending'
       });
 
       await user.save();
@@ -84,6 +86,15 @@ module.exports = {
         const messages = Object.values(err.errors).map(e => e.message);
         return res.status(400).json({ success: false, message: messages.join(", ") });
       }
+      
+      // Handle duplicate key errors (email already exists)
+      if (err.code === 11000) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Email already in use. Please use a different email address." 
+        });
+      }
+      
       res
         .status(500)
         .json({ success: false, message: "Server error during registration" });
@@ -101,6 +112,21 @@ module.exports = {
 
       // Use schema static method
       const user = await User.findByCredentials(email, password);
+
+      // Check if user account is verified by admin
+      if (user.verificationStatus === 'pending') {
+        return res.status(403).json({
+          success: false,
+          message: "Your account is pending verification by an administrator. Please wait for approval.",
+        });
+      }
+
+      if (user.verificationStatus === 'rejected') {
+        return res.status(403).json({
+          success: false,
+          message: "Your account verification was rejected. Please contact support for assistance.",
+        });
+      }
 
       if (!user.emailVerified) {
         return res.status(403).json({
@@ -127,6 +153,69 @@ module.exports = {
       res
         .status(401)
         .json({ success: false, message: err.message || "Login failed" });
+    }
+  },
+
+  /**
+   * @desc    Admin login
+   * @route   POST /api/v1/auth/admin/login
+   * @access  Public
+   */
+  async adminLogin(req, res) {
+    try {
+      const { email, password } = req.body;
+
+      // Use schema static method
+      const user = await User.findByCredentials(email, password);
+
+      // Check if user account is verified by admin
+      if (user.verificationStatus === 'pending') {
+        return res.status(403).json({
+          success: false,
+          message: "Your account is pending verification by an administrator. Please wait for approval.",
+        });
+      }
+
+      if (user.verificationStatus === 'rejected') {
+        return res.status(403).json({
+          success: false,
+          message: "Your account verification was rejected. Please contact support for assistance.",
+        });
+      }
+
+      if (!user.emailVerified) {
+        return res.status(403).json({
+          success: false,
+          message: "Please verify your email first",
+        });
+      }
+
+      // Check if user is admin
+      if (user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. Administrator privileges required.",
+        });
+      }
+
+      const token = await user.generateAuthToken();
+
+      res.json({
+        success: true,
+        message: "Admin login successful",
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (err) {
+      console.error("Admin Login Error:", err);
+      res
+        .status(401)
+        .json({ success: false, message: err.message || "Admin login failed" });
     }
   },
 
@@ -206,20 +295,45 @@ module.exports = {
    */
   async getMe(req, res) {
     try {
-      const user = await User.findById(req.userId).select(
-        "-password -emailVerificationToken"
-      );
-      if (!user)
-        return res
-          .status(404)
-          .json({ success: false, message: "User not found" });
-
-      res.json({ success: true, user });
+      console.log('🔍 getMe called with req.user:', req.user);
+      
+      // Check if user exists and has required fields
+      if (!req.user || !req.user._id) {
+        console.log('🔍 No user found in request');
+        return res.status(401).json({ 
+          success: false, 
+          message: "User not authenticated"
+        });
+      }
+      
+      // Return user data directly without any transformation
+      const userData = {
+        _id: req.user._id,
+        name: req.user.name || 'Unknown User',
+        email: req.user.email || '',
+        role: req.user.role || 'student',
+        points: req.user.points || 0,
+        emailVerified: req.user.emailVerified || false,
+        profileComplete: req.user.profileComplete || false,
+        referralCode: req.user.referralCode || '',
+        createdAt: req.user.createdAt || new Date(),
+        updatedAt: req.user.updatedAt || new Date()
+      };
+      
+      console.log('🔍 Returning user data:', userData);
+      
+      res.json({ 
+        success: true, 
+        user: userData
+      });
+      
     } catch (err) {
-      console.error("Get User Error:", err);
-      res
-        .status(500)
-        .json({ success: false, message: "Failed to fetch user data" });
+      console.error("🔍 Get User Error:", err);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to fetch user data",
+        error: err.message
+      });
     }
   },
 
@@ -233,7 +347,7 @@ module.exports = {
       const { name, phone } = req.body;
 
       const user = await User.findByIdAndUpdate(
-        req.userId,
+        req.user._id,
         { name, phone },
         { new: true, runValidators: true }
       ).select("-password -emailVerificationToken");
@@ -259,7 +373,7 @@ module.exports = {
   async changePassword(req, res) {
     try {
       const { currentPassword, newPassword } = req.body;
-      const user = await User.findById(req.userId).select("+password");
+      const user = await User.findById(req.user._id).select("+password");
 
       if (!user)
         return res

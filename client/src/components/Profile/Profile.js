@@ -1,60 +1,104 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 
-const API_BASE_URL = "http://localhost:5001"; // update in prod
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
     const token = localStorage.getItem("authToken");
+        
     if (!token) {
-      window.location.href = "/login";
+          navigate("/login");
       return;
     }
 
-    fetch(`${API_BASE_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Unauthorized");
-        return res.json();
-      })
-      .then((data) => {
-        setUser({
-          ...data,
-          referralCode: data.referralCode || "JHUB1234",
-          level: data.level || 3,
-          points: data.points || 1250,
-          nextLevel: data.nextLevel || 2000,
-          coursesCompleted: data.coursesCompleted || 3,
-          totalCourses: data.totalCourses || 12,
-          achievements: data.achievements || 2,
-          referrals: data.referrals || 5,
-          referralPoints: data.referralPoints || 500,
-          lastLogin: data.lastLogin || "Today at 10:30 AM",
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
         });
-      })
-      .catch((err) => {
-        console.error(err);
+
+        if (!response.ok) {
+          if (response.status === 401) {
         localStorage.removeItem("authToken");
-        window.location.href = "/login";
-      });
-  }, []);
+            navigate("/login");
+            return;
+          }
+          throw new Error("Failed to fetch profile");
+        }
+
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+        } else {
+          throw new Error("Invalid user data");
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
-    window.location.href = "/login";
+    navigate("/login");
   };
 
-  const copyReferral = () => {
-    navigator.clipboard.writeText(
-      `https://jhubafrica.com/register?ref=${user.referralCode}`
+  const copyReferralCode = () => {
+    if (user?.referralCode) {
+      navigator.clipboard.writeText(user.referralCode);
+      alert("Referral code copied to clipboard!");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="profile-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading your profile...</p>
+      </div>
     );
-    alert("Referral link copied to clipboard!");
-  };
+  }
 
-  if (!user) return <p>Loading profile...</p>;
+  if (error) {
+    return (
+      <div className="profile-error">
+        <div className="error-icon">
+          <i className="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2>Something went wrong</h2>
+        <p>{error}</p>
+        <button className="btn-primary" onClick={() => window.location.reload()}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="profile-error">
+        <h2>No user data found</h2>
+        <button className="btn-primary" onClick={() => navigate("/login")}>
+          Go to Login
+        </button>
+      </div>
+    );
+  }
 
   const initials = user.name
     ? user.name
@@ -65,232 +109,133 @@ export default function Profile() {
     : "U";
 
   return (
-    <>
-      {/* Navigation */}
-      <nav className="navbar">
-        <div className="logo">
-          <img src="/images/logo.png" alt="JHUB Africa" />
-          <span className="logo-text">JHUB Africa</span>
+    <div className="profile">
+      {/* Header */}
+      <header className="profile-header">
+        <div className="header-content">
+          <div className="welcome-section">
+            <h1>My Profile</h1>
+            <p className="subtitle">Manage your account and preferences</p>
+          </div>
+          <div className="header-actions">
+            <button className="btn-secondary" onClick={() => navigate("/dashboard")}>
+              <i className="fas fa-arrow-left"></i>
+              Back to Dashboard
+            </button>
+            <button className="btn-logout" onClick={handleLogout}>
+              <i className="fas fa-sign-out-alt"></i>
+              Logout
+            </button>
         </div>
-
-        <div className="nav-links">
-          <a href="/courses">Courses</a>
-          <a href="/dashboard">Dashboard</a>
-          <a href="/leaderboard">Leaderboard</a>
-          <a href="/rewards">Rewards</a>
-          <a href="/profile" className="active">
-            Profile
-          </a>
         </div>
+      </header>
 
-        <div className="user-menu">
-          <div className="user-avatar">{initials}</div>
+      {/* Profile Content */}
+      <div className="profile-container">
+        <div className="profile-grid">
+          {/* Profile Card */}
+          <div className="profile-card">
+            <div className="profile-avatar">
+              <div className="avatar-circle">
+                <span className="avatar-text">{initials}</span>
         </div>
-      </nav>
-
-      {/* Layout */}
-      <div className="dashboard-container">
-        {/* Sidebar */}
-        <div className="sidebar">
-          <ul className="sidebar-menu">
-            <li>
-              <a href="/dashboard">
-                <i className="fas fa-home"></i> Dashboard
-              </a>
-            </li>
-            <li>
-              <a href="/my-courses">
-                <i className="fas fa-book-open"></i> My Courses
-              </a>
-            </li>
-            <li>
-              <a href="/achievements">
-                <i className="fas fa-trophy"></i> Achievements
-              </a>
-            </li>
-            <li>
-              <a href="/points">
-                <i className="fas fa-coins"></i> Points Wallet
-              </a>
-            </li>
-            <li>
-              <a href="/referrals">
-                <i className="fas fa-user-plus"></i> Refer Friends
-              </a>
-            </li>
-            <li>
-              <a href="/settings">
-                <i className="fas fa-cog"></i> Settings
-              </a>
-            </li>
-            <li>
-              <button onClick={handleLogout} className="logout-btn">
-                <i className="fas fa-sign-out-alt"></i> Logout
-              </button>
-            </li>
-          </ul>
         </div>
-
-        {/* Main Content */}
-        <div className="main-content">
-          {/* Profile Header */}
-          <div className="profile-header">
-            <div className="profile-avatar">{initials}</div>
             <div className="profile-info">
-              <h1>{user.name}</h1>
-              <p>
-                Level {user.level} Explorer | Joined{" "}
-                {user.joined || "March 2023"}
-              </p>
-
+              <h2>{user.name || "User Name"}</h2>
+              <p className="user-email">{user.email}</p>
               <div className="profile-stats">
-                <div className="profile-stat">
-                  <h3>{user.points.toLocaleString()}</h3>
-                  <p>XP Points</p>
+                <div className="stat-item">
+                  <span className="stat-value">{user.points || 0}</span>
+                  <span className="stat-label">Total Points</span>
                 </div>
-                <div className="profile-stat">
-                  <h3>{user.coursesCompleted}</h3>
-                  <p>Courses</p>
+                <div className="stat-item">
+                  <span className="stat-value">{user.courses?.length || 0}</span>
+                  <span className="stat-label">Courses</span>
                 </div>
-                <div className="profile-stat">
-                  <h3>{user.referrals}</h3>
-                  <p>Referrals</p>
+                <div className="stat-item">
+                  <span className="stat-value">{user.referrals || 0}</span>
+                  <span className="stat-label">Referrals</span>
                 </div>
               </div>
             </div>
-            <button
-              className="profile-edit-btn"
-              onClick={() => (window.location.href = "/settings")}
-            >
-              <i className="fas fa-edit"></i> Edit Profile
-            </button>
           </div>
 
-          {/* Profile Details */}
-          <div className="profile-details">
-            <div className="detail-card">
-              <h2>Personal Information</h2>
-              <div className="detail-row">
-                <div className="detail-label">Full Name</div>
-                <div className="detail-value">{user.name}</div>
+          {/* Personal Information */}
+          <div className="info-card">
+            <h3>Personal Information</h3>
+            <div className="info-list">
+              <div className="info-item">
+                <span className="info-label">Full Name</span>
+                <span className="info-value">{user.name || "Not provided"}</span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">Email</div>
-                <div className="detail-value">{user.email}</div>
+              <div className="info-item">
+                <span className="info-label">Email</span>
+                <span className="info-value">{user.email}</span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">Phone</div>
-                <div className="detail-value">{user.phone || "Not set"}</div>
+              <div className="info-item">
+                <span className="info-label">Member Since</span>
+                <span className="info-value">
+                  {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Recently"}
+                </span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">Location</div>
-                <div className="detail-value">
-                  {user.location || "Not provided"}
+              <div className="info-item">
+                <span className="info-label">Last Login</span>
+                <span className="info-value">
+                  {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "Today"}
+                </span>
                 </div>
               </div>
             </div>
 
-            <div className="detail-card">
-              <h2>Learning Progress</h2>
-              <div className="detail-row">
-                <div className="detail-label">Current Level</div>
-                <div className="detail-value">{user.level} Explorer</div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">XP Points</div>
-                <div className="detail-value">
-                  {user.points} / {user.nextLevel} to next level
-                </div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Courses Completed</div>
-                <div className="detail-value">
-                  {user.coursesCompleted} of {user.totalCourses}
-                </div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Achievements</div>
-                <div className="detail-value">
-                  {user.achievements} unlocked
-                </div>
-              </div>
-            </div>
-
-            <div className="detail-card">
-              <h2>Referral Program</h2>
-              <div className="detail-row">
-                <div className="detail-label">Referral Code</div>
-                <div className="detail-value">
-                  <strong>{user.referralCode}</strong>
-                  <button
-                    onClick={copyReferral}
-                    style={{
-                      marginLeft: "10px",
-                      padding: "3px 8px",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    <i className="fas fa-copy"></i> Copy
+          {/* Referral Information */}
+          <div className="referral-card">
+            <h3>Referral Program</h3>
+            <div className="referral-content">
+              <div className="referral-code-section">
+                <h4>Your Referral Code</h4>
+                <div className="code-display">
+                  <span className="referral-code">{user.referralCode || "JHUB1234"}</span>
+                  <button className="btn-copy" onClick={copyReferralCode}>
+                    <i className="fas fa-copy"></i>
                   </button>
+              </div>
+                <p className="referral-note">
+                  Share this code with friends to earn bonus points when they join!
+                </p>
                 </div>
+              <div className="referral-stats">
+                <div className="referral-stat">
+                  <span className="stat-number">{user.referrals || 0}</span>
+                  <span className="stat-label">Total Referrals</span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">Friends Referred</div>
-                <div className="detail-value">{user.referrals}</div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Referral Points</div>
-                <div className="detail-value">
-                  {user.referralPoints.toLocaleString()} XP
+                <div className="referral-stat">
+                  <span className="stat-number">{(user.referrals || 0) * 100}</span>
+                  <span className="stat-label">Points Earned</span>
                 </div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Referral Link</div>
-                <div className="detail-value">
-                  <input
-                    type="text"
-                    value={`https://jhubafrica.com/register?ref=${user.referralCode}`}
-                    readOnly
-                    style={{
-                      width: "100%",
-                      padding: "5px",
-                      border: "1px solid #ddd",
-                      borderRadius: "3px",
-                    }}
-                  />
                 </div>
               </div>
             </div>
 
-            <div className="detail-card">
-              <h2>Account Security</h2>
-              <div className="detail-row">
-                <div className="detail-label">Password</div>
-                <div className="detail-value">
-                  ******** <a href="/change-password">Change</a>
-                </div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Two-Factor Auth</div>
-                <div className="detail-value">
-                  {user.twoFactorEnabled ? "Enabled" : "Not Enabled"}{" "}
-                  <a href="/settings#security">Manage</a>
-                </div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Last Login</div>
-                <div className="detail-value">{user.lastLogin}</div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Account Status</div>
-                <div className="detail-value">
-                  {user.status || "Active"}
-                </div>
+          {/* Quick Actions */}
+          <div className="actions-card">
+            <h3>Quick Actions</h3>
+            <div className="action-buttons">
+              <button className="btn-primary" onClick={() => navigate("/settings")}>
+                <i className="fas fa-cog"></i>
+                Account Settings
+              </button>
+              <button className="btn-secondary" onClick={() => navigate("/referrals")}>
+                <i className="fas fa-users"></i>
+                Manage Referrals
+              </button>
+              <button className="btn-secondary" onClick={() => navigate("/courses")}>
+                <i className="fas fa-book"></i>
+                Browse Courses
+                  </button>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </>
   );
 }

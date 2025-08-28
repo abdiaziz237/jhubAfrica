@@ -1,0 +1,50 @@
+{{> header}}
+
+<div class="content">
+  <h2>Course Interest Confirmation</h2>
+  
+  <p>Dear {{fullName}},</p>
+  
+  <p>Thank you for expressing interest in our course: <strong>{{courseTitle}}</strong></p>
+  
+  <p>We have received your application and our team will review it carefully. Here's what happens next:</p>
+  
+  <div class="next-steps">
+    <h3>Next Steps:</h3>
+    <ol>
+      <li><strong>Review Period:</strong> Our admin team will review your application within 2-3 business days</li>
+      <li><strong>Qualification Check:</strong> We'll assess your background and motivation</li>
+      <li><strong>Notification:</strong> You'll receive an email with our decision</li>
+      <li><strong>Enrollment:</strong> If approved, you'll receive enrollment instructions</li>
+    </ol>
+  </div>
+  
+  <div class="course-details">
+    <h3>Course Details:</h3>
+    <p><strong>Course:</strong> {{courseTitle}}</p>
+    <p><strong>Application Date:</strong> {{formatDate createdAt}}</p>
+    <p><strong>Status:</strong> <span class="status pending">Under Review</span></p>
+  </div>
+  
+  <div class="important-info">
+    <h3>Important Information:</h3>
+    <ul>
+      <li>No upfront payment is required at this stage</li>
+      <li>You'll only pay once your cohort is confirmed</li>
+      <li>We'll guide you through the entire process</li>
+      <li>Feel free to contact us with any questions</li>
+    </ul>
+  </div>
+  
+  <p>We're excited about your interest in learning with us! Our team will be in touch soon.</p>
+  
+  <p>Best regards,<br>
+  <strong>The JHUB Africa Team</strong></p>
+  
+  <div class="cta-buttons">
+    <a href="{{coursesUrl}}" class="btn btn-primary">Browse More Courses</a>
+    <a href="{{supportUrl}}" class="btn btn-secondary">Contact Support</a>
+  </div>
+</div>
+
+{{> footer}}

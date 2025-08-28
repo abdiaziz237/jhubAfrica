@@ -46,6 +46,7 @@ module.exports = (app) => {
       // Special cases for naming consistency
       if (routeName === 'course') basePath = '/api/v1/courses';
       if (routeName === 'admin') basePath = '/api/v1/admin';
+      if (routeName === 'adminSettings') basePath = '/api/v1/admin/settings';
       if (routeName === 'auth') basePath = '/api/v1/auth';
       if (routeName === 'dashboard') basePath = '/api/v1/dashboard';
       if (routeName === 'referralRoutes') basePath = '/api/v1/referrals';

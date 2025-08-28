@@ -1,244 +1,423 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Settings.css";
 
-const Settings = () => {
-  const [activeTab, setActiveTab] = useState("profile");
-  const [user, setUser] = useState({
-    firstName: "Jane",
-    lastName: "Student",
-    email: "jane.student@example.com",
-    phone: "+254712345678",
-    bio: "Digital skills enthusiast currently learning web development and digital marketing through JHUB Africa.",
-    avatar: "/images/avatar-placeholder.jpg",
-    notifications: {
-      email: { courseUpdates: true, promotional: true, accountActivity: true },
-      push: { newCourses: true, deadlineReminders: true, pointsEarned: true },
-    },
-    privacy: { visibility: "public", shareAnalytics: true, partnerOffers: false },
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
+
+export default function Settings() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [settings, setSettings] = useState({
+    emailNotifications: true,
+    learningReminders: true,
+    courseUpdates: true,
+    achievementAlerts: true,
+    referralNotifications: true,
+    darkMode: false,
+    autoPlay: false,
+    soundEffects: true
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: ""
+  });
+  const navigate = useNavigate();
 
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-
-  // Load settings from backend
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setLoading(true);
     const token = localStorage.getItem("authToken");
+        
     if (!token) {
-      window.location.href = "/login";
+          navigate("/login");
       return;
     }
 
-    fetch("http://localhost:5001/api/user/settings", {
-      headers: { Authorization: "Bearer " + token },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load settings");
-        return res.json();
-      })
-      .then((data) => {
-        setUser((prev) => ({ ...prev, ...data }));
-      })
-      .catch((err) => console.error("Error loading settings:", err));
-  }, []);
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        });
 
-  // Handle avatar update
-  const handleUploadAvatar = () => {
-    setUser({ ...user, avatar: "https://randomuser.me/api/portraits/women/44.jpg" });
-    alert("Profile photo updated successfully!");
-  };
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("authToken");
+            navigate("/login");
+            return;
+          }
+          throw new Error("Failed to fetch user data");
+        }
 
-  const handleRemoveAvatar = () => {
-    setUser({ ...user, avatar: "/images/avatar-placeholder.jpg" });
-    alert("Profile photo removed. A default avatar will be shown.");
-  };
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+          setEditForm({
+            name: data.user.name || "",
+            email: data.user.email || "",
+            phone: data.user.phone || "",
+            location: data.user.location || ""
+          });
+        } else {
+          throw new Error("Invalid user data");
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Handle logout
+    fetchSettings();
+  }, [navigate]);
+
   const handleLogout = () => {
     localStorage.removeItem("authToken");
-    window.location.href = "/login";
+    navigate("/login");
   };
 
+  const handleSettingChange = (settingName) => {
+    setSettings(prev => ({
+      ...prev,
+      [settingName]: !prev[settingName]
+    }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/update-profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editForm)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUser(prev => ({ ...prev, ...editForm }));
+          setIsEditing(false);
+          alert("Profile updated successfully!");
+        }
+      } else {
+        throw new Error("Failed to update profile");
+      }
+    } catch (err) {
+      alert("Error updating profile: " + err.message);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setEditForm(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
+  if (loading) {
   return (
-    <>
-      {/* Navigation */}
-      <nav className="navbar">
-        <div className="logo">
-          <img src="/images/logo.png" alt="JHUB Africa" />
-          <span className="logo-text">JHUB Africa</span>
+      <div className="settings-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading your settings...</p>
         </div>
-        <div className="nav-links">
-          <a href="/courses">Courses</a>
-          <a href="/dashboard">Dashboard</a>
-          <a href="/leaderboard">Leaderboard</a>
-          <a href="/rewards">Rewards</a>
-          <a href="/profile">Profile</a>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="settings-error">
+        <div className="error-icon">
+          <i className="fas fa-exclamation-triangle"></i>
         </div>
-        <div className="user-menu">
-          <div className="user-avatar">
-            {user.firstName[0]}
-            {user.lastName[0]}
+        <h2>Something went wrong</h2>
+        <p>{error}</p>
+        <button className="btn-primary" onClick={() => window.location.reload()}>
+          Try Again
+        </button>
           </div>
-        </div>
-      </nav>
+    );
+  }
 
-      {/* Dashboard Layout */}
-      <div className="dashboard-container">
-        {/* Sidebar */}
-        <div className="sidebar">
-          <ul className="sidebar-menu">
-            <li><a href="/dashboard"><i className="fas fa-home"></i> Dashboard</a></li>
-            <li><a href="/my-courses"><i className="fas fa-book-open"></i> My Courses</a></li>
-            <li><a href="/achievements"><i className="fas fa-trophy"></i> Achievements</a></li>
-            <li><a href="/points"><i className="fas fa-coins"></i> Points Wallet</a></li>
-            <li><a href="/referrals"><i className="fas fa-user-plus"></i> Refer Friends</a></li>
-            <li><a href="/settings" className="active"><i className="fas fa-cog"></i> Settings</a></li>
-            <li><button onClick={handleLogout} className="logout-btn"><i className="fas fa-sign-out-alt"></i> Logout</button></li>
-          </ul>
+  if (!user) {
+    return (
+      <div className="settings-error">
+        <h2>No user data found</h2>
+        <button className="btn-primary" onClick={() => navigate("/login")}>
+          Go to Login
+        </button>
         </div>
+    );
+  }
 
-        {/* Main Content */}
-        <div className="main-content">
-          <div className="settings-header">
+  return (
+    <div className="settings">
+      {/* Header */}
+      <header className="settings-header">
+        <div className="header-content">
+          <div className="welcome-section">
             <h1>Account Settings</h1>
+            <p className="subtitle">Customize your learning experience</p>
           </div>
-
-          {/* Tabs */}
-          <div className="settings-tabs">
-            {["profile", "security", "notifications", "privacy", "billing"].map((tab) => (
-              <div
-                key={tab}
-                className={`settings-tab ${activeTab === tab ? "active" : ""}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </div>
-            ))}
-          </div>
-
-          {/* Profile Tab */}
-          {activeTab === "profile" && (
-            <div className="settings-section">
-              <h2 className="section-title"><i className="fas fa-user"></i> Profile Information</h2>
-              <div className="avatar-upload">
-                <div className="avatar-preview">
-                  <img src={user.avatar} alt="User Avatar" />
-                </div>
-                <div className="avatar-upload-actions">
-                  <button className="btn btn-outline btn-sm" onClick={handleUploadAvatar}>
-                    <i className="fas fa-upload"></i> Upload New Photo
+          <div className="header-actions">
+            <button className="btn-secondary" onClick={() => navigate("/dashboard")}>
+              <i className="fas fa-arrow-left"></i>
+              Back to Dashboard
                   </button>
-                  <button className="btn btn-outline btn-sm" onClick={handleRemoveAvatar}>
-                    <i className="fas fa-trash"></i> Remove Photo
+            <button className="btn-logout" onClick={handleLogout}>
+              <i className="fas fa-sign-out-alt"></i>
+              Logout
                   </button>
                 </div>
               </div>
+      </header>
 
-              <div className="form-row">
+      {/* Settings Content */}
+      <div className="settings-container">
+        <div className="settings-grid">
+          {/* Profile Settings */}
+          <div className="settings-card">
+            <h3>Profile Information</h3>
+            {!isEditing ? (
+              <div className="profile-info">
+                <div className="info-item">
+                  <span className="info-label">Name:</span>
+                  <span className="info-value">{user.name || "Not provided"}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Email:</span>
+                  <span className="info-value">{user.email}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Phone:</span>
+                  <span className="info-value">{user.phone || "Not provided"}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Location:</span>
+                  <span className="info-value">{user.location || "Not provided"}</span>
+                </div>
+                <button className="btn-primary" onClick={() => setIsEditing(true)}>
+                  <i className="fas fa-edit"></i>
+                  Edit Profile
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleEditSubmit} className="edit-form">
                 <div className="form-group">
-                  <label>First Name</label>
-                  <input type="text" value={user.firstName} readOnly />
+                  <label htmlFor="name">Full Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={editForm.name}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
                 <div className="form-group">
-                  <label>Last Name</label>
-                  <input type="text" value={user.lastName} readOnly />
+                  <label htmlFor="email">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={editForm.email}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
+                <div className="form-group">
+                  <label htmlFor="phone">Phone</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={editForm.phone}
+                    onChange={handleInputChange}
+                  />
               </div>
-
               <div className="form-group">
-                <label>Email Address</label>
-                <input type="email" value={user.email} readOnly />
+                  <label htmlFor="location">Location</label>
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    value={editForm.location}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn-primary">
+                    <i className="fas fa-save"></i>
+                    Save Changes
+                  </button>
+                  <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
               </div>
 
-              <div className="form-group">
-                <label>Phone Number</label>
-                <input type="tel" value={user.phone} readOnly />
+          {/* Notification Settings */}
+          <div className="settings-card">
+            <h3>Notification Preferences</h3>
+            <div className="settings-list">
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Email Notifications</h4>
+                  <p>Receive updates about your courses and achievements</p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.emailNotifications}
+                    onChange={() => handleSettingChange('emailNotifications')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
               </div>
 
-              <div className="form-group">
-                <label>Bio</label>
-                <textarea rows="4" value={user.bio} readOnly></textarea>
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Learning Reminders</h4>
+                  <p>Get reminded to continue your courses</p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.learningReminders}
+                    onChange={() => handleSettingChange('learningReminders')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
               </div>
 
-              <button className="btn btn-primary">Save Changes</button>
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Course Updates</h4>
+                  <p>Notifications about new course content</p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.courseUpdates}
+                    onChange={() => handleSettingChange('courseUpdates')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
             </div>
-          )}
-
-          {/* Security Tab */}
-          {activeTab === "security" && (
-            <div className="settings-section">
-              <h2 className="section-title"><i className="fas fa-shield-alt"></i> Security Settings</h2>
-              <div className="form-group">
-                <label>Password</label>
-                <p className="device-meta">Last changed 3 months ago</p>
-                <button className="btn btn-outline" onClick={() => setShowPasswordForm(true)}>Change Password</button>
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Achievement Alerts</h4>
+                  <p>Celebrate your learning milestones</p>
               </div>
-              {showPasswordForm && (
-                <div>
-                  <div className="form-group">
-                    <label>Current Password</label>
-                    <input type="password" />
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.achievementAlerts}
+                    onChange={() => handleSettingChange('achievementAlerts')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
                   </div>
-                  <div className="form-group">
-                    <label>New Password</label>
-                    <input type="password" />
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Referral Notifications</h4>
+                  <p>Updates about your referral program</p>
                   </div>
-                  <div className="form-group">
-                    <label>Confirm New Password</label>
-                    <input type="password" />
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.referralNotifications}
+                    onChange={() => handleSettingChange('referralNotifications')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
                   </div>
-                  <div className="form-group">
-                    <button className="btn btn-primary">Update Password</button>
-                    <button className="btn btn-outline" onClick={() => setShowPasswordForm(false)}>Cancel</button>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Notifications Tab */}
-          {activeTab === "notifications" && (
-            <div className="settings-section">
-              <h2 className="section-title"><i className="fas fa-bell"></i> Notification Preferences</h2>
-              <div className="form-group">
-                <label>Email Notifications</label>
-                <div className="checkbox-group">
-                  <input type="checkbox" checked={user.notifications.email.courseUpdates} readOnly />
-                  <label>Course updates and announcements</label>
+          {/* Interface Settings */}
+          <div className="settings-card">
+            <h3>Interface Preferences</h3>
+            <div className="settings-list">
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Dark Mode</h4>
+                  <p>Switch to dark theme for better visibility</p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.darkMode}
+                    onChange={() => handleSettingChange('darkMode')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+            </div>
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Auto-play Videos</h4>
+                  <p>Automatically play course videos</p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.autoPlay}
+                    onChange={() => handleSettingChange('autoPlay')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+            </div>
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h4>Sound Effects</h4>
+                  <p>Play sounds for interactions</p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.soundEffects}
+                    onChange={() => handleSettingChange('soundEffects')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
                 </div>
               </div>
-              <button className="btn btn-primary">Save Preferences</button>
             </div>
-          )}
 
-          {/* Privacy Tab */}
-          {activeTab === "privacy" && (
-            <div className="settings-section">
-              <h2 className="section-title"><i className="fas fa-lock"></i> Privacy Settings</h2>
-              <div className="form-group">
-                <label>Profile Visibility</label>
-                <div className="checkbox-group">
-                  <input type="radio" checked={user.privacy.visibility === "public"} readOnly />
-                  <label>Public</label>
-                </div>
-                <div className="checkbox-group">
-                  <input type="radio" checked={user.privacy.visibility === "private"} readOnly />
-                  <label>Private</label>
-                </div>
-              </div>
+          {/* Quick Actions */}
+          <div className="actions-card">
+            <h3>Quick Actions</h3>
+            <div className="action-buttons">
+              <button className="btn-primary" onClick={() => navigate("/profile")}>
+                <i className="fas fa-user"></i>
+                View Profile
+              </button>
+              <button className="btn-secondary" onClick={() => navigate("/referrals")}>
+                <i className="fas fa-users"></i>
+                Manage Referrals
+              </button>
+              <button className="btn-secondary" onClick={() => navigate("/courses")}>
+                <i className="fas fa-book"></i>
+                Browse Courses
+              </button>
             </div>
-          )}
-
-          {/* Billing Tab */}
-          {activeTab === "billing" && (
-            <div className="settings-section">
-              <h2 className="section-title"><i className="fas fa-credit-card"></i> Billing Information</h2>
-              <p className="device-meta">You have 1,250 points available (KES 1,250)</p>
-              <button className="btn btn-primary"><i className="fas fa-coins"></i> Redeem Points</button>
+          </div>
             </div>
-          )}
         </div>
       </div>
-    </>
   );
-};
-
-export default Settings;
+}

@@ -2,10 +2,14 @@ const Joi = require('joi');
 
 // User Registration Schema
 const registerUser = Joi.object({
-  name: Joi.string().min(3).max(50).required(),
+  firstName: Joi.string().min(2).max(25).required()
+    .pattern(/^[a-zA-Z\s\-']+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
+  lastName: Joi.string().min(2).max(25).required()
+    .pattern(/^[a-zA-Z\s\-']+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required(),
-  role: Joi.string().valid('admin', 'instructor', 'student').default('student')
+  role: Joi.string().valid('admin', 'instructor', 'student', 'user').default('student'),
+  phone: Joi.string().optional()
 });
 
 // User Update Schema

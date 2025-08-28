@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const requiredEnvVars = [
   'JWT_SECRET',
-  'MONGODB_URI',
+  'MONGO_URI',
   'NODE_ENV'
 ];
 
@@ -14,7 +14,7 @@ const validateEnv = () => {
     process.exit(1);
   }
 
-  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI.includes('ssl=true')) {
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGO_URI.includes('ssl=true')) {
     console.warn('Warning: Production database connection should use SSL');
   }
 };

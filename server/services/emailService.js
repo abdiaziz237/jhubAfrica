@@ -126,6 +126,54 @@ async function sendEmail(options) {
   return result;
 }
 
+/**
+ * Send course interest confirmation email
+ */
+async function sendCourseInterestConfirmation(email, fullName, courseTitle) {
+  const mailOptions = {
+    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Course Interest Confirmation - JHUB Africa",
+    template: "course-interest-confirmation", // views/emails/course-interest-confirmation.hbs
+    context: {
+      fullName,
+      courseTitle,
+      subject: "Course Interest Confirmation - JHUB Africa",
+      year: new Date().getFullYear(),
+      supportUrl: `${process.env.BASE_URL}/support`,
+      coursesUrl: `${process.env.BASE_URL}/courses`,
+    },
+  };
+
+  await transporter.sendMail(mailOptions);
+  console.log(`📧 Course interest confirmation email sent to ${email}`);
+}
+
+/**
+ * Send course interest status update email
+ */
+async function sendCourseInterestStatusUpdate(email, fullName, courseTitle, status, adminResponse) {
+  const mailOptions = {
+    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `Course Interest ${status.charAt(0).toUpperCase() + status.slice(1)} - JHUB Africa`,
+    template: "course-interest-status", // views/emails/course-interest-status.hbs
+    context: {
+      fullName,
+      courseTitle,
+      status,
+      adminResponse,
+      subject: `Course Interest ${status.charAt(0).toUpperCase() + status.slice(1)} - JHUB Africa`,
+      year: new Date().getFullYear(),
+      supportUrl: `${process.env.BASE_URL}/support`,
+      coursesUrl: `${process.env.BASE_URL}/courses`,
+    },
+  };
+
+  await transporter.sendMail(mailOptions);
+  console.log(`📧 Course interest status update email sent to ${email}`);
+}
+
 module.exports = {
   transporter,
   generateVerificationToken,
@@ -133,5 +181,7 @@ module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendPasswordResetSuccessEmail,
-  sendEmail
+  sendEmail,
+  sendCourseInterestConfirmation,
+  sendCourseInterestStatusUpdate
 };

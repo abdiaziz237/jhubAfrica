@@ -1,0 +1,344 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './AdminDashboard.css';
+
+const AdminAnalytics = () => {
+  const [analytics, setAnalytics] = useState({
+    userGrowth: [],
+    courseStats: [],
+    revenueData: [],
+    userRoles: [],
+    geographicData: [],
+    realTimeStats: {}
+  });
+  const [loading, setLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState('6months');
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [selectedPeriod]);
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        setError('No admin token found. Please log in again.');
+        return;
+      }
+      
+      console.log('Fetching analytics from:', `/api/v1/admin/dashboard/analytics?period=${selectedPeriod}`);
+      
+      // Fetch comprehensive analytics data - fix the endpoint URL to match server routes
+      const response = await fetch(`/api/v1/admin/dashboard/analytics?period=${selectedPeriod}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Analytics response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Analytics data received:', data);
+        if (data.success && data.data) {
+          setAnalytics(data.data);
+        } else {
+          // Set default empty data structure
+          setAnalytics({
+            userGrowth: [],
+            courseStats: [],
+            revenueData: [],
+            userRoles: [],
+            geographicData: [],
+            realTimeStats: {}
+          });
+        }
+      } else {
+        // Handle API errors gracefully
+        const errorData = await response.json();
+        console.error('Analytics API error:', errorData);
+        setError(errorData.message || `Failed to fetch analytics data (Status: ${response.status})`);
+        setAnalytics({
+          userGrowth: [],
+          courseStats: [],
+          revenueData: [],
+          userRoles: [],
+          geographicData: [],
+          realTimeStats: {}
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      setError(`Network error: ${error.message}`);
+      setAnalytics({
+        userGrowth: [],
+        courseStats: [],
+        revenueData: [],
+        userRoles: [],
+        geographicData: [],
+        realTimeStats: {}
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Safe getter functions with null checks
+  const getTotalUsers = () => {
+    try {
+      if (analytics.userGrowth && Array.isArray(analytics.userGrowth) && analytics.userGrowth.length > 0) {
+        const latest = analytics.userGrowth[analytics.userGrowth.length - 1];
+        return latest?.users || 0;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error getting total users:', error);
+      return 0;
+    }
+  };
+
+  const getTotalRevenue = () => {
+    try {
+      if (analytics.revenueData && Array.isArray(analytics.revenueData)) {
+        return analytics.revenueData.reduce((sum, item) => sum + (item?.revenue || 0), 0);
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error getting total revenue:', error);
+      return 0;
+    }
+  };
+
+  const getTotalCourses = () => {
+    try {
+      if (analytics.courseStats && Array.isArray(analytics.courseStats)) {
+        return analytics.courseStats.reduce((sum, item) => sum + (item?.enrollments || 0), 0);
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error getting total courses:', error);
+      return 0;
+    }
+  };
+
+  const getActiveUsers = () => {
+    try {
+      if (analytics.realTimeStats && typeof analytics.realTimeStats === 'object') {
+        return analytics.realTimeStats.activeUsers || 0;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error getting active users:', error);
+      return 0;
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchAnalytics();
+  };
+
+  if (loading) {
+    return (
+      <div className="admin-dashboard-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading analytics...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-analytics">
+      <div className="admin-header">
+        <h1>📊 Analytics Dashboard</h1>
+        <div className="admin-actions">
+          <select 
+            value={selectedPeriod} 
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="period-selector"
+          >
+            <option value="1month">Last Month</option>
+            <option value="3months">Last 3 Months</option>
+            <option value="6months">Last 6 Months</option>
+            <option value="1year">Last Year</option>
+          </select>
+          <button 
+            className="admin-btn secondary" 
+            onClick={handleRefresh}
+          >
+            🔄 Refresh
+          </button>
+          <button 
+            className="admin-btn secondary" 
+            onClick={() => navigate('/admin/dashboard')}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="error-alert">
+          <i className="fas fa-exclamation-triangle"></i>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Key Metrics Overview */}
+      <div className="analytics-overview">
+        <div className="metric-card">
+          <div className="metric-icon">👥</div>
+          <div className="metric-content">
+            <h3>Total Users</h3>
+            <p className="metric-number">{getTotalUsers().toLocaleString()}</p>
+            <span className="metric-label">Registered users</span>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon">📚</div>
+          <div className="metric-content">
+            <h3>Total Courses</h3>
+            <p className="metric-number">{getTotalCourses().toLocaleString()}</p>
+            <span className="metric-label">Active courses</span>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon">💰</div>
+          <div className="metric-content">
+            <h3>Total Revenue</h3>
+            <p className="metric-number">₦{(getTotalRevenue() / 1000).toFixed(0)}K</p>
+            <span className="metric-label">Platform revenue</span>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon">🟢</div>
+          <div className="metric-content">
+            <h3>Active Users</h3>
+            <p className="metric-number">{getActiveUsers().toLocaleString()}</p>
+            <span className="metric-label">Currently online</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts and Data Visualization */}
+      <div className="analytics-charts">
+        <div className="chart-section">
+          <h3>📈 User Growth Trends</h3>
+          <div className="chart-container">
+            {analytics.userGrowth && Array.isArray(analytics.userGrowth) && analytics.userGrowth.length > 0 ? (
+              <div className="chart-data">
+                <p>User growth data available</p>
+                <small>Chart visualization coming soon</small>
+              </div>
+            ) : (
+              <div className="chart-placeholder">
+                <p>No user growth data available for the selected period</p>
+                <small>Data will appear as users register</small>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="chart-section">
+          <h3>📊 Course Performance</h3>
+          <div className="chart-container">
+            {analytics.courseStats && Array.isArray(analytics.courseStats) && analytics.courseStats.length > 0 ? (
+              <div className="chart-data">
+                <p>Course performance data available</p>
+                <small>Chart visualization coming soon</small>
+              </div>
+            ) : (
+              <div className="chart-placeholder">
+                <p>No course performance data available</p>
+                <small>Data will appear as courses are created and students enroll</small>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="chart-section">
+          <h3>💰 Revenue Analytics</h3>
+          <div className="chart-container">
+            {analytics.revenueData && Array.isArray(analytics.revenueData) && analytics.revenueData.length > 0 ? (
+              <div className="chart-data">
+                <p>Revenue data available</p>
+                <small>Chart visualization coming soon</small>
+              </div>
+            ) : (
+              <div className="chart-placeholder">
+                <p>No revenue data available</p>
+                <small>Data will appear when payment system is integrated</small>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="chart-section">
+          <h3>🌍 Geographic Distribution</h3>
+          <div className="chart-container">
+            {analytics.geographicData && Array.isArray(analytics.geographicData) && analytics.geographicData.length > 0 ? (
+              <div className="chart-data">
+                <p>Geographic data available</p>
+                <small>Chart visualization coming soon</small>
+              </div>
+            ) : (
+              <div className="chart-placeholder">
+                <p>No geographic data available</p>
+                <small>Data will appear as users from different locations register</small>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Real-time Statistics */}
+      <div className="real-time-stats">
+        <h3>🕒 Real-time Statistics</h3>
+        <div className="stats-grid">
+          {analytics.realTimeStats && typeof analytics.realTimeStats === 'object' && Object.keys(analytics.realTimeStats).length > 0 ? (
+            Object.entries(analytics.realTimeStats).map(([key, value]) => (
+              <div key={key} className="stat-item">
+                <span className="stat-label">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</span>
+                <span className="stat-value">{typeof value === 'number' ? value.toLocaleString() : value}</span>
+              </div>
+            ))
+          ) : (
+            <div className="no-stats">
+              <p>No real-time statistics available</p>
+              <small>Real-time monitoring will be available soon</small>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Data Export and Actions */}
+      <div className="analytics-actions">
+        <h3>📤 Data Export & Actions</h3>
+        <div className="action-buttons">
+          <button className="admin-btn secondary" disabled>
+            📊 Export Analytics Report
+          </button>
+          <button className="admin-btn secondary" disabled>
+            📈 Generate Insights
+          </button>
+          <button className="admin-btn secondary" disabled>
+            🔔 Set Alerts
+          </button>
+        </div>
+        <p className="feature-note">
+          <small>Advanced analytics features coming soon. Currently displaying real-time data from your platform.</small>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default AdminAnalytics;

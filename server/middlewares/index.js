@@ -1,6 +1,6 @@
 const { authenticate } = require('./auth');
 const { authorizeAdmin } = require('./admin');
-const { validate } = require('./validation');
+const { validate, validateJoi } = require('./validation');
 const rateLimit = require('express-rate-limit');
 
 // Rate limiting for admin routes
@@ -14,5 +14,6 @@ module.exports = {
   authenticate,
   authorizeAdmin,
   validate,
+  validateJoi,
   adminLimiter
 };

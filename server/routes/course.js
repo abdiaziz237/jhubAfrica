@@ -1,41 +1,32 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
-const { authenticate } = require('../middlewares/auth');
+const { protect, authorize } = require('../middlewares/auth');
 
-// @route   GET /api/v1/courses
-// @desc    Get all courses (listing only)
-// @access  Public
-router.get('/', courseController.listCourses);
+// Public routes
+router.get('/', courseController.getAllCourses);
+router.get('/search', courseController.searchCourses);
+router.get('/category/:category', courseController.getCoursesByCategory);
+router.get('/:id', courseController.getCourse);
+router.post('/interest', courseController.submitCourseInterest);
 
-// @route   GET /api/v1/courses/:id/content
-// @desc    Get full course content
-// @access  Public (can restrict later)
-router.get('/:id/content', courseController.getCourseContent);
+// Protected routes
+router.use(protect); // All routes below this require authentication
 
-// @route   POST /api/v1/courses
-// @desc    Create a new course
-// @access  Private (Instructor/Admin)
-router.post('/', authenticate, courseController.createCourse);
+router.get('/enrolled', courseController.getEnrolledCourses);
+router.get('/waitlisted', courseController.getWaitlistedCourses);
+router.get('/interest/approved', courseController.getApprovedCourseInterests);
+router.post('/:id/enroll', courseController.enrollInCourse);
+router.delete('/:id/enroll', courseController.unenrollFromCourse);
 
-// @route   PUT /api/v1/courses/:id
-// @desc    Update course
-// @access  Private (Instructor/Admin)
-router.put('/:id', authenticate, courseController.updateCourse);
+// Waitlist routes
+router.get('/:id/waitlist', courseController.getWaitlistStatus);
+router.post('/:id/waitlist', courseController.joinWaitlist);
+router.delete('/:id/waitlist', courseController.leaveWaitlist);
 
-// @route   DELETE /api/v1/courses/:id
-// @desc    Delete course
-// @access  Private (Instructor/Admin)
-router.delete('/:id', authenticate, courseController.deleteCourse);
-
-// @route   POST /api/v1/courses/:id/enroll
-// @desc    Enroll in course
-// @access  Private (Student)
-router.post('/:id/enroll', authenticate, courseController.enrollCourse);
-
-// @route   POST /api/v1/courses/:id/reviews
-// @desc    Add review
-// @access  Private (Student)
-router.post('/:id/reviews', authenticate, courseController.addReview);
+// Admin/Instructor only routes
+router.post('/', authorize('admin', 'instructor'), courseController.createCourse);
+router.put('/:id', authorize('admin', 'instructor'), courseController.updateCourse);
+router.delete('/:id', authorize('admin', 'instructor'), courseController.deleteCourse);
 
 module.exports = router;

@@ -1,0 +1,137 @@
+.admin-access-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.admin-access-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  animation: slideIn 0.3s ease-out;
+}
+
+.admin-access-modal h2 {
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.admin-access-modal p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.admin-access-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.admin-access-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.admin-access-error {
+  color: #dc3545;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+.admin-access-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.admin-access-submit,
+.admin-access-cancel {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.admin-access-submit {
+  background-color: #007bff;
+  color: white;
+}
+
+.admin-access-submit:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.admin-access-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.admin-access-cancel:hover {
+  background-color: #545b62;
+  transform: translateY(-2px);
+}
+
+.admin-access-hint {
+  color: #999;
+  font-size: 0.8rem;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .admin-access-modal {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .admin-access-buttons {
+    flex-direction: column;
+  }
+  
+  .admin-access-submit,
+  .admin-access-cancel {
+    width: 100%;
+  }
+}

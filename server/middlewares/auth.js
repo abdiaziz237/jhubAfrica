@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const { logSecurityEvent } = require('../utils/securityLogger');
 
-const authenticate = async (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     // 1. Check for token
     let token;
@@ -30,10 +30,7 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // 3. Check if user exists
-    const user = await User.findOne({
-      _id: decoded._id,
-      'tokens.token': token
-    });
+    const user = await User.findById(decoded._id);
 
     if (!user) {
       logSecurityEvent('AUTH_INVALID_TOKEN', {
@@ -47,7 +44,7 @@ const authenticate = async (req, res, next) => {
     }
 
     // 4. Check if password changed after token issued
-    if (user.changedPasswordAfter(decoded.iat)) {
+    if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
       logSecurityEvent('AUTH_PASSWORD_CHANGED', {
         userId: user._id
       });
@@ -57,18 +54,21 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // 5. Check 2FA if required
-    if (user.twoFactorEnabled && !decoded.twoFactorVerified) {
+    // 5. Check if user is active
+    if (!user.isActive) {
+      logSecurityEvent('AUTH_INACTIVE_USER', {
+        userId: user._id
+      });
       return res.status(401).json({
         success: false,
-        error: 'Two-factor authentication required',
-        requires2FA: true
+        error: 'Account is deactivated'
       });
     }
 
-    // 6. Attach user and token to request
+    // 6. Attach user info to request
+    req.userId = user._id;
+    req.userRole = user.role;
     req.user = user;
-    req.token = token;
 
     next();
   } catch (err) {
@@ -91,12 +91,12 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-const authorizeRoles = (...roles) => {
+const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.userRole || !roles.includes(req.userRole)) {
       logSecurityEvent('AUTH_UNAUTHORIZED_ROLE', {
-        userId: req.user._id,
-        attemptedRole: req.user.role,
+        userId: req.userId,
+        attemptedRole: req.userRole,
         requiredRoles: roles
       });
       return res.status(403).json({
@@ -108,7 +108,13 @@ const authorizeRoles = (...roles) => {
   };
 };
 
+// Legacy function names for backward compatibility
+const authenticate = protect;
+const authorizeRoles = authorize;
+
 module.exports = {
+  protect,
+  authorize,
   authenticate,
   authorizeRoles
 };

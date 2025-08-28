@@ -1,7 +1,6 @@
 import React, { useState } from "react";
+import config from "../../config";
 import "./Register.css";
-
-const API_BASE_URL = "http://localhost:5002"; // change for production
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -63,10 +62,10 @@ const Register = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+      const response = await fetch(`${config.API_BASE_URL}/v1/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData), // matches backend schema
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
@@ -82,124 +81,181 @@ const Register = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-header">
-        <img src="/images/logo.png" alt="JHUB Africa" className="auth-logo" />
-        <h1>Create Your Account</h1>
-        <p>Start your learning journey and earn rewards</p>
+      <div className="auth-background">
+        <div className="auth-background-overlay"></div>
+        <div className="auth-background-pattern"></div>
       </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">Full Name</label>
-          <input
-            type="text"
-            id="name"
-            className="form-control"
-            placeholder="Enter your full name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          {errors.name && <div className="error-message">{errors.name}</div>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="email">Email Address</label>
-          <input
-            type="email"
-            id="email"
-            className="form-control"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-          {errors.email && <div className="error-message">{errors.email}</div>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <div className="input-icon">
-            <input
-              type="password"
-              id="password"
-              className="form-control"
-              placeholder="Create a password"
-              value={formData.password}
-              onChange={(e) => {
-                handleChange(e);
-                checkPasswordStrength(e.target.value);
-              }}
-              required
-            />
-            <i
-              className="fas fa-eye"
-              onClick={() => togglePasswordVisibility("password")}
-            ></i>
-          </div>
-          {passwordStrength && (
-            <div
-              className={`password-strength strength-${passwordStrength.toLowerCase()}`}
-            >
-              {passwordStrength} password
+      
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-logo-container">
+            <div className="auth-logo">
+              <i className="fas fa-crown"></i>
             </div>
-          )}
-          {errors.password && (
-            <div className="error-message">{errors.password}</div>
-          )}
+            <div className="auth-brand">
+              <h2>JHUB Africa</h2>
+              <span>Premium Learning Platform</span>
+            </div>
+          </div>
+          
+          <div className="auth-welcome">
+            <h1>Create Your Account</h1>
+            <p>Start your journey to professional excellence</p>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="passwordConfirm">Confirm Password</label>
-          <div className="input-icon">
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label className="form-label" htmlFor="name">
+              <i className="fas fa-user"></i>
+              Full Name
+            </label>
             <input
-              type="password"
-              id="passwordConfirm"
-              className="form-control"
-              placeholder="Confirm your password"
-              value={formData.passwordConfirm}
+              type="text"
+              id="name"
+              className={`form-control ${errors.name ? 'error' : ''}`}
+              placeholder="Enter your full name"
+              value={formData.name}
               onChange={handleChange}
             />
-            <i
-              className="fas fa-eye"
-              onClick={() => togglePasswordVisibility("passwordConfirm")}
-            ></i>
+            {errors.name && <span className="field-error">{errors.name}</span>}
           </div>
-          {errors.passwordConfirm && (
-            <div className="error-message">{errors.passwordConfirm}</div>
-          )}
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="email">
+              <i className="fas fa-envelope"></i>
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              className={`form-control ${errors.email ? 'error' : ''}`}
+              placeholder="Enter your email address"
+              value={formData.email}
+              onChange={handleChange}
+            />
+            {errors.email && <span className="field-error">{errors.email}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="password">
+              <i className="fas fa-lock"></i>
+              Password
+            </label>
+            <div className="input-wrapper">
+              <input
+                type="password"
+                id="password"
+                className={`form-control ${errors.password ? 'error' : ''}`}
+                placeholder="Create a strong password"
+                value={formData.password}
+                onChange={(e) => {
+                  handleChange(e);
+                  checkPasswordStrength(e.target.value);
+                }}
+              />
+              <button 
+                type="button" 
+                className="password-toggle"
+                onClick={() => togglePasswordVisibility("password")}
+              >
+                <i className="fas fa-eye"></i>
+              </button>
+            </div>
+            {passwordStrength && (
+              <div className={`password-strength strength-${passwordStrength.toLowerCase()}`}>
+                <i className="fas fa-shield-alt"></i>
+                {passwordStrength} password
+              </div>
+            )}
+            {errors.password && <span className="field-error">{errors.password}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="passwordConfirm">
+              <i className="fas fa-lock"></i>
+              Confirm Password
+            </label>
+            <div className="input-wrapper">
+              <input
+                type="password"
+                id="passwordConfirm"
+                className={`form-control ${errors.passwordConfirm ? 'error' : ''}`}
+                placeholder="Confirm your password"
+                value={formData.passwordConfirm}
+                onChange={handleChange}
+              />
+              <button 
+                type="button" 
+                className="password-toggle"
+                onClick={() => togglePasswordVisibility("passwordConfirm")}
+              >
+                <i className="fas fa-eye"></i>
+              </button>
+            </div>
+            {errors.passwordConfirm && <span className="field-error">{errors.passwordConfirm}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="role">
+              <i className="fas fa-user-graduate"></i>
+              I am a
+            </label>
+            <select
+              id="role"
+              className="form-control"
+              value={formData.role}
+              onChange={handleChange}
+            >
+              <option value="student">Student</option>
+              <option value="professional">Professional</option>
+              <option value="instructor">Instructor</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="referralCode">
+              <i className="fas fa-gift"></i>
+              Referral Code (Optional)
+            </label>
+            <input
+              type="text"
+              id="referralCode"
+              className="form-control"
+              placeholder="Enter referral code if you have one"
+              value={formData.referralCode}
+              onChange={handleChange}
+            />
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? (
+              <span className="btn-content">
+                <i className="fas fa-spinner fa-spin"></i>
+                <span>Creating Account...</span>
+              </span>
+            ) : (
+              <span className="btn-content">
+                <i className="fas fa-user-plus"></i>
+                <span>Create Account</span>
+              </span>
+            )}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          <div className="auth-divider">
+            <span>or</span>
+          </div>
+          
+          <div className="auth-signin">
+            <p>Already have an account?</p>
+            <a href="/login" className="btn-secondary">
+              <i className="fas fa-sign-in-alt"></i>
+              Sign In
+            </a>
+          </div>
         </div>
-
-        <div className="form-group">
-          <label htmlFor="referralCode">Referral Code (Optional)</label>
-          <input
-            type="text"
-            id="referralCode"
-            className="form-control"
-            placeholder="Enter referral code if any"
-            value={formData.referralCode}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="role">Role</label>
-          <select
-            id="role"
-            className="form-control"
-            value={formData.role}
-            onChange={handleChange}
-          >
-            <option value="student">Student</option>
-            <option value="instructor">Instructor</option>
-          </select>
-        </div>
-
-        <button type="submit" className="btn" disabled={loading}>
-          {loading ? <i className="fas fa-spinner fa-spin"></i> : "Register Now"}
-        </button>
-      </form>
-
-      <div className="auth-footer">
-        Already have an account? <a href="/login">Sign In</a>
       </div>
     </div>
   );

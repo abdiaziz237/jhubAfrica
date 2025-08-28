@@ -1,0 +1,92 @@
+{{> header}}
+
+<div class="content">
+  <h2>Course Interest {{#if (eq status 'approved')}}Approved{{else if (eq status 'rejected')}}Update{{else}}{{capitalize status}}{{/if}}</h2>
+  
+  <p>Dear {{fullName}},</p>
+  
+  {{#if (eq status 'approved')}}
+    <div class="status-approved">
+      <h3>🎉 Congratulations! Your application has been approved!</h3>
+      <p>We're excited to inform you that your application for <strong>{{courseTitle}}</strong> has been approved!</p>
+      
+      <div class="next-steps">
+        <h3>What happens next:</h3>
+        <ol>
+          <li><strong>Waitlist Confirmation:</strong> You're now on our approved waitlist</li>
+          <li><strong>Cohort Formation:</strong> We'll notify you when we have enough students to form a cohort</li>
+          <li><strong>Payment Instructions:</strong> Once the cohort is confirmed, you'll receive payment details</li>
+          <li><strong>Course Access:</strong> You'll get access to the course platform and materials</li>
+        </ol>
+      </div>
+      
+      <p><strong>Important:</strong> No payment is required until the cohort is confirmed. We'll contact you with all the details.</p>
+    </div>
+  {{else if (eq status 'rejected')}}
+    <div class="status-rejected">
+      <h3>Application Update</h3>
+      <p>Thank you for your interest in <strong>{{courseTitle}}</strong>. After careful review, we regret to inform you that we cannot approve your application at this time.</p>
+      
+      {{#if adminResponse}}
+        <div class="feedback">
+          <h3>Feedback:</h3>
+          <p>{{adminResponse}}</p>
+        </div>
+      {{/if}}
+      
+      <div class="alternatives">
+        <h3>Alternative Options:</h3>
+        <ul>
+          <li>Consider our other courses that might be a better fit</li>
+          <li>Improve your qualifications and reapply later</li>
+          <li>Contact our support team for guidance</li>
+        </ul>
+      </div>
+    </div>
+  {{else if (eq status 'contacted')}}
+    <div class="status-contacted">
+      <h3>We'd like to discuss your application</h3>
+      <p>Our team would like to have a conversation with you about your application for <strong>{{courseTitle}}</strong>.</p>
+      
+      {{#if adminResponse}}
+        <div class="message">
+          <h3>Message from our team:</h3>
+          <p>{{adminResponse}}</p>
+        </div>
+      {{/if}}
+      
+      <p>Please check your email for contact details or reach out to us directly.</p>
+    </div>
+  {{else}}
+    <div class="status-update">
+      <h3>Application Status Update</h3>
+      <p>Your application for <strong>{{courseTitle}}</strong> has been updated to: <span class="status {{status}}">{{capitalize status}}</span></p>
+      
+      {{#if adminResponse}}
+        <div class="message">
+          <h3>Additional Information:</h3>
+          <p>{{adminResponse}}</p>
+        </div>
+      {{/if}}
+    </div>
+  {{/if}}
+  
+  <div class="course-details">
+    <h3>Course Details:</h3>
+    <p><strong>Course:</strong> {{courseTitle}}</p>
+    <p><strong>Status:</strong> <span class="status {{status}}">{{capitalize status}}</span></p>
+    <p><strong>Updated:</strong> {{formatDate responseDate}}</p>
+  </div>
+  
+  <p>If you have any questions about this update, please don't hesitate to contact our support team.</p>
+  
+  <p>Best regards,<br>
+  <strong>The JHUB Africa Team</strong></p>
+  
+  <div class="cta-buttons">
+    <a href="{{coursesUrl}}" class="btn btn-primary">Browse Courses</a>
+    <a href="{{supportUrl}}" class="btn btn-secondary">Contact Support</a>
+  </div>
+</div>
+
+{{> footer}}

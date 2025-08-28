@@ -48,6 +48,9 @@ if (missingEnvVars.length > 0) {
 // =======================
 const app = express();
 
+// Trust proxy for rate limiting (fixes X-Forwarded-For header issue)
+app.set('trust proxy', 1);
+
 // =======================
 // 1. Database connection
 // =======================
@@ -126,6 +129,11 @@ if (fs.existsSync(clientBuildPath)) {
 // =======================
 loadRoutes(app);
 
+// Manually mount auth routes to ensure they work
+const authRoutes = require('./routes/auth');
+app.use('/api/v1/auth', authRoutes);
+console.log('✅ Auth routes manually mounted at /api/v1/auth');
+
 // =======================
 // 8. Health check
 // =======================
@@ -188,7 +196,7 @@ app.use(errorHandler);
 // =======================
 // 13. Server initialization
 // =======================
-const PORT = process.env.PORT || 5002; // use environment variable or default to 5002
+const PORT = process.env.PORT || 5001; // use environment variable or default to 5001
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
   console.log(`✅ Health: http://localhost:${PORT}/api/health`);
@@ -213,5 +221,27 @@ process.on('SIGINT', () => {
     console.log('✅ Process terminated');
   });
 });
+
+// Admin access control middleware
+const adminAccessControl = (req, res, next) => {
+  // In production, restrict admin access to specific conditions
+  if (process.env.NODE_ENV === 'production') {
+    // Check if user is authenticated as admin
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access restricted in production'
+      });
+    }
+    
+    // Additional security checks can be added here
+    // For example: IP whitelisting, time-based access, etc.
+  }
+  
+  next();
+};
+
+// Apply admin access control to admin routes
+app.use('/api/v1/admin', adminAccessControl);
 
 module.exports = app;

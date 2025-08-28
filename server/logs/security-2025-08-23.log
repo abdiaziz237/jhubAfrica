@@ -1,3 +1,0 @@
-{"level":"info","message":"Security event occurred","metadata":{"count":1,"eventType":"AUTH_MISSING_TOKEN","ip":"::1","path":"/auth/login","severity":"info"},"timestamp":"2025-08-23 14:20:10"}
-{"level":"info","message":"Security event occurred","metadata":{"count":1,"eventType":"AUTH_MISSING_TOKEN","ip":"::1","path":"/auth/login","severity":"info"},"timestamp":"2025-08-23 17:59:37"}
-{"level":"info","message":"Security event occurred","metadata":{"count":1,"email":"sizumoha458@gmail.com","eventType":"LOGIN_FAILED_EMAIL","severity":"info"},"timestamp":"2025-08-23 21:29:34"}
