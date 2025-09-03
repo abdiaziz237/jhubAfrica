@@ -88,11 +88,7 @@ const courseSchema = new mongoose.Schema({
     enum: ['active', 'inactive', 'full', 'waitlist-only', 'draft'],
     default: 'active'
   },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
-    required: true
-  },
+
   createdAt: {
     type: Date,
     default: Date.now

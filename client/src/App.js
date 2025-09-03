@@ -198,10 +198,6 @@ function Navbar() {
               <i className="fas fa-home"></i>
               <span>Home</span>
           </Link>
-          <Link to="/courses" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
-              <i className="fas fa-graduation-cap"></i>
-              <span>Courses</span>
-          </Link>
           
           {isLoggedIn ? (
             <>
@@ -302,30 +298,10 @@ function App() {
               <Register />
             </>
           } />
-          <Route path="/dashboard" element={
-            <>
-              <Navbar />
-              <Dashboard />
-            </>
-          } />
-          <Route path="/profile" element={
-            <>
-              <Navbar />
-              <Profile />
-            </>
-          } />
-          <Route path="/settings" element={
-            <>
-              <Navbar />
-              <Settings />
-            </>
-          } />
-          <Route path="/referrals" element={
-            <>
-              <Navbar />
-              <Referrals />
-            </>
-          } />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/referrals" element={<Referrals />} />
 
           <Route path="/forgot-password" element={
             <>

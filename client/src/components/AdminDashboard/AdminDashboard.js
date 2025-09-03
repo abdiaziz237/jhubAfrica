@@ -581,6 +581,12 @@ const AdminDashboard = () => {
                         {stats.totalUsers > 0 ? `${Math.round((stats.activeUsers / stats.totalUsers) * 100)}%` : '0%'}
                       </span>
                     </div>
+                    <div className="metric-stat">
+                      <span className="metric-label">Conversion Rate</span>
+                      <span className="metric-value">
+                        {stats.totalUsers > 0 ? `${Math.round((stats.totalEnrollments / stats.totalUsers) * 100)}%` : '0%'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -631,12 +637,6 @@ const AdminDashboard = () => {
                       <span className="metric-label">Revenue Growth</span>
                       <span className="metric-value">
                         {stats.totalRevenue > 0 ? 'Positive' : 'No data'}
-                      </span>
-                    </div>
-                    <div className="metric-stat">
-                      <span className="metric-label">Conversion Rate</span>
-                      <span className="metric-value">
-                        {stats.totalUsers > 0 ? `${Math.round((stats.totalEnrollments / stats.totalUsers) * 100)}%` : '0%'}
                       </span>
                     </div>
                   </div>

@@ -240,8 +240,28 @@ const dashboardController = {
         ? Math.round((completedEnrollments / totalEnrollments) * 100) 
         : 0;
       
-      // Calculate total revenue (placeholder - you can implement actual revenue calculation)
-      const totalRevenue = 0; // This would be calculated from actual payments
+      // Calculate total revenue based on course enrollments and prices
+      const revenueData = await Enrollment.aggregate([
+        {
+          $lookup: {
+            from: 'courses',
+            localField: 'course',
+            foreignField: '_id',
+            as: 'courseData'
+          }
+        },
+        {
+          $unwind: '$courseData'
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: '$courseData.price' }
+          }
+        }
+      ]);
+      
+      const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
       
       // Get enrollment status breakdown
       const activeEnrollments = await Enrollment.countDocuments({
@@ -420,14 +440,129 @@ const dashboardController = {
         }
       ]);
       
+      // Calculate total revenue from enrollments
+      const revenueData = await Enrollment.aggregate([
+        {
+          $lookup: {
+            from: 'courses',
+            localField: 'course',
+            foreignField: '_id',
+            as: 'courseData'
+          }
+        },
+        {
+          $unwind: '$courseData'
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: '$courseData.price' }
+          }
+        }
+      ]);
+      
+      const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
+      
+      // Get enrollment trends over time
+      const enrollmentTrends = await Enrollment.aggregate([
+        {
+          $group: {
+            _id: {
+              year: { $year: '$enrollmentDate' },
+              month: { $month: '$enrollmentDate' },
+              day: { $dayOfMonth: '$enrollmentDate' }
+            },
+            count: { $sum: 1 }
+          }
+        },
+        {
+          $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 }
+        },
+        {
+          $project: {
+            period: {
+              $dateToString: {
+                format: '%m-%d',
+                date: {
+                  $dateFromParts: {
+                    year: '$_id.year',
+                    month: '$_id.month',
+                    day: '$_id.day'
+                  }
+                }
+              }
+            },
+            count: 1
+          }
+        }
+      ]);
+
+      // Get user engagement metrics
+      const userEngagement = await User.aggregate([
+        {
+          $lookup: {
+            from: 'enrollments',
+            localField: '_id',
+            foreignField: 'user',
+            as: 'enrollments'
+          }
+        },
+        {
+          $project: {
+            userId: '$_id',
+            totalEnrollments: { $size: '$enrollments' },
+            activeEnrollments: {
+              $size: {
+                $filter: {
+                  input: '$enrollments',
+                  cond: { $eq: ['$$this.status', 'active'] }
+                }
+              }
+            },
+            completedEnrollments: {
+              $size: {
+                $filter: {
+                  input: '$enrollments',
+                  cond: { $eq: ['$$this.status', 'completed'] }
+                }
+              }
+            },
+            averageProgress: {
+              $avg: {
+                $map: {
+                  input: '$enrollments',
+                  as: 'enrollment',
+                  in: '$$enrollment.progress'
+                }
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalUsers: { $sum: 1 },
+            usersWithEnrollments: {
+              $sum: { $cond: [{ $gt: ['$totalEnrollments', 0] }, 1, 0] }
+            },
+            averageEnrollmentsPerUser: { $avg: '$totalEnrollments' },
+            averageProgress: { $avg: '$averageProgress' }
+          }
+        }
+      ]);
+
       const analytics = {
         userRoles,
         courseStats,
         enrollmentStats,
+        enrollmentTrends,
+        userEngagement: userEngagement.length > 0 ? userEngagement[0] : {},
+        revenueData: [{ revenue: totalRevenue, period: 'total' }],
         totalUsers: await User.countDocuments(),
         totalCourses: await Course.countDocuments(),
         totalEnrollments: await Enrollment.countDocuments(),
         totalCourseInterests: await CourseInterest.countDocuments(),
+        totalRevenue,
         timestamp: new Date()
       };
       
@@ -689,7 +824,7 @@ const dashboardController = {
               day: { $dayOfMonth: '$enrollmentDate' }
             },
             totalEnrollments: { $sum: 1 },
-            estimatedRevenue: { $sum: { $multiply: ['$courseData.points', 10] } } // Estimate 10 KES per point
+            estimatedRevenue: { $sum: '$courseData.price' } // Use actual course prices
           }
         },
         {

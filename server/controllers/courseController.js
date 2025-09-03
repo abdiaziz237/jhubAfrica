@@ -97,7 +97,7 @@ module.exports = {
         points: points || 0,
         price: price || 0,
         maxStudents: maxStudents || 100,
-        createdBy: req.userId
+
       });
 
       await course.save();
@@ -145,8 +145,8 @@ module.exports = {
         });
       }
 
-      // Check if user is creator or admin
-      if (course.createdBy.toString() !== req.userId && req.userRole !== 'admin') {
+      // Check if user is admin (removed createdBy check)
+      if (req.userRole !== 'admin') {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to update this course'
@@ -195,8 +195,8 @@ module.exports = {
         });
       }
 
-      // Check if user is creator or admin
-      if (course.createdBy.toString() !== req.userId && req.userRole !== 'admin') {
+      // Check if user is admin (removed createdBy check)
+      if (req.userRole !== 'admin') {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to delete this course'

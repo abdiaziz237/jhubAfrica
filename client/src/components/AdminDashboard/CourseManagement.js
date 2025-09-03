@@ -853,7 +853,7 @@ const CourseManagement = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Price (₦)</label>
+                  <label>Price (KES)</label>
                   <input
                     type="number"
                     name="price"
@@ -984,7 +984,7 @@ const CourseManagement = () => {
                         </div>
                         <div className="course-meta">
                           <span className="meta-item">📊 {course.points} pts</span>
-                          <span className="meta-item">💰 ₦{course.price?.toLocaleString()}</span>
+                          <span className="meta-item">💰 KES {course.price?.toLocaleString()}</span>
                           <span className="meta-item">⏱️ {course.duration}</span>
                         </div>
                     </div>
@@ -1052,7 +1052,7 @@ const CourseManagement = () => {
                   <p><strong>Category:</strong> {selectedCourse.category}</p>
                   <p><strong>Description:</strong> {selectedCourse.description}</p>
                   <p><strong>Points:</strong> {selectedCourse.points}</p>
-                  <p><strong>Price:</strong> ₦{selectedCourse.price?.toLocaleString()}</p>
+                  <p><strong>Price:</strong> KES {selectedCourse.price?.toLocaleString()}</p>
                   <p><strong>Duration:</strong> {selectedCourse.duration}</p>
                 </div>
                 

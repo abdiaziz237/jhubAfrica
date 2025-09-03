@@ -260,7 +260,7 @@ module.exports = {
   async createCourse(req, res) {
     try {
       // console.log('Creating course with data:', req.body);
-      // console.log('User ID from token:', req.userId);
+      // console.log('User ID from token:', req.user._id);
       
       // Remove level field if it exists (not in Course model)
       const { level, ...courseData } = req.body;
@@ -281,8 +281,7 @@ module.exports = {
         waitlistEnabled: courseData.waitlistEnabled !== undefined ? courseData.waitlistEnabled : true,
         cohortStatus: courseData.cohortStatus || 'planning',
         cohortReadyThreshold: parseInt(courseData.cohortReadyThreshold) || 10,
-        status: 'active', // Ensure course is active
-        createdBy: req.userId
+        status: 'active' // Ensure course is active
       };
 
       // console.log('Final course data:', finalCourseData);
@@ -331,8 +330,7 @@ module.exports = {
   // @access  Admin only
   async getCourse(req, res) {
     try {
-      const course = await Course.findById(req.params.courseId)
-        .populate('createdBy', 'name email');
+      const course = await Course.findById(req.params.courseId);
 
       if (!course) {
         return res.status(404).json({

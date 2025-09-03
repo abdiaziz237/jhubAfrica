@@ -25,6 +25,11 @@ const UserManagement = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [message, setMessage] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [bulkAction, setBulkAction] = useState('');
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     // Check if we're on an edit route
@@ -253,7 +258,7 @@ const UserManagement = () => {
     setFormErrors({});
   };
 
-  // Filter users based on search and filters
+  // Filter and sort users
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -261,7 +266,78 @@ const UserManagement = () => {
     const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
     
     return matchesSearch && matchesRole && matchesStatus;
+  }).sort((a, b) => {
+    let aValue = a[sortBy] || '';
+    let bValue = b[sortBy] || '';
+    
+    if (sortBy === 'name') {
+      aValue = a.name || '';
+      bValue = b.name || '';
+    }
+    
+    if (typeof aValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+    
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
   });
+
+  // Handle user selection
+  const handleUserSelect = (userId, isSelected) => {
+    if (isSelected) {
+      setSelectedUsers(prev => [...prev, userId]);
+    } else {
+      setSelectedUsers(prev => prev.filter(id => id !== userId));
+    }
+  };
+
+  // Handle select all
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      setSelectedUsers(filteredUsers.map(user => user._id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedUsers.length === 0) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const promises = selectedUsers.map(userId => {
+        const url = `${config.API_BASE_URL}/v1/admin/users/${userId}`;
+        const method = bulkAction === 'delete' ? 'DELETE' : 'PATCH';
+        const body = bulkAction === 'delete' ? null : JSON.stringify({ status: bulkAction });
+        
+        return fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body
+        });
+      });
+
+      await Promise.all(promises);
+      setMessage(`Bulk ${bulkAction} completed successfully!`);
+      setSelectedUsers([]);
+      setBulkAction('');
+      setShowBulkActions(false);
+      await fetchUsers();
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Bulk action error:', error);
+      setMessage('Failed to perform bulk action');
+    }
+  };
 
   // If we're on an edit route, show the edit form
   if (userId && userId !== 'new') {
@@ -501,6 +577,24 @@ const UserManagement = () => {
             <option value="suspended">Suspended</option>
             <option value="inactive">Inactive</option>
           </select>
+
+          <select 
+            className="filter-select"
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="name">Sort by Name</option>
+            <option value="email">Sort by Email</option>
+            <option value="role">Sort by Role</option>
+            <option value="createdAt">Sort by Date</option>
+          </select>
+
+          <button
+            className="admin-btn secondary"
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </button>
           
           <button
             className="admin-btn primary"
@@ -510,6 +604,44 @@ const UserManagement = () => {
           </button>
         </div>
       </div>
+
+      {/* Bulk Actions */}
+      {selectedUsers.length > 0 && (
+        <div className="bulk-actions-bar">
+          <div className="bulk-actions-info">
+            <span>{selectedUsers.length} user(s) selected</span>
+          </div>
+          <div className="bulk-actions-controls">
+            <select 
+              className="bulk-action-select"
+              value={bulkAction} 
+              onChange={(e) => setBulkAction(e.target.value)}
+            >
+              <option value="">Select Action</option>
+              <option value="active">Activate</option>
+              <option value="inactive">Deactivate</option>
+              <option value="suspended">Suspend</option>
+              <option value="delete">Delete</option>
+            </select>
+            <button
+              className="admin-btn primary"
+              onClick={handleBulkAction}
+              disabled={!bulkAction}
+            >
+              Apply Action
+            </button>
+            <button
+              className="admin-btn secondary"
+              onClick={() => {
+                setSelectedUsers([]);
+                setBulkAction('');
+              }}
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* User Form - Only show for adding new users */}
       {showAddForm && !editingUser && (
@@ -641,17 +773,32 @@ const UserManagement = () => {
             <table className="users-table">
             <thead>
               <tr>
-                  <th>User</th>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </th>
+                <th>User</th>
                 <th>Role</th>
                 <th>Status</th>
                 <th>Phone</th>
                 <th>Location</th>
+                <th>Joined</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
                 {filteredUsers.map((user) => (
-                <tr key={user._id}>
+                <tr key={user._id} className={selectedUsers.includes(user._id) ? 'selected' : ''}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user._id)}
+                      onChange={(e) => handleUserSelect(user._id, e.target.checked)}
+                    />
+                  </td>
                   <td>
                     <div className="user-info">
                       <div className="user-name">{user.name || `${user.firstName || ''} ${user.lastName || ''}`}</div>
@@ -670,19 +817,22 @@ const UserManagement = () => {
                   </td>
                   <td>{user.phone || '-'}</td>
                   <td>{user.location || '-'}</td>
+                  <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
                   <td>
                     <div className="user-actions">
                     <button 
                         className="btn-edit"
                         onClick={() => handleEditUser(user)}
+                        title="Edit User"
                     >
-                        Edit
+                        ✏️
                     </button>
                     <button 
                         className="btn-delete"
                         onClick={() => handleDeleteUser(user._id)}
+                        title="Delete User"
                       >
-                        Delete
+                        🗑️
                       </button>
                     </div>
                   </td>

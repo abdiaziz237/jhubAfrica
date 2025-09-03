@@ -64,6 +64,11 @@
             "date": 1756847245686,
             "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-09-03.log",
             "hash": "527b11c2cd05fc52b03d5db62e39b3aac8519ae5671fd581d5b2cc04a2892568"
+        },
+        {
+            "date": 1756934411316,
+            "name": "C:\\Users\\HP\\Desktop\\jhub\\server\\logs\\security-2025-09-04.log",
+            "hash": "f05ad4022bbebafe1b62be3d948922f5e5902d369dff8ba71a65ccc44c25d94d"
         }
     ],
     "hashType": "sha256"

@@ -46,6 +46,18 @@
   padding: 6rem 2rem 4rem;
   position: relative;
   overflow: hidden;
+  animation: heroSlideIn 1s ease-out;
+}
+
+@keyframes heroSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-pattern {
@@ -101,6 +113,18 @@
   justify-content: center;
   gap: 4rem;
   margin-top: 3rem;
+  animation: statsFadeIn 1.2s ease-out 0.3s both;
+}
+
+@keyframes statsFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .stat-item {
@@ -434,21 +458,36 @@
 /* Professional Course Card */
 .course-card {
   background: var(--bg-primary);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-light);
   overflow: hidden;
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
-  min-height: 480px;
+  min-height: 500px;
   max-width: none !important;
   width: 100% !important;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
   margin: 0;
   padding: 0;
+  transform: translateY(0);
+  animation: cardFadeIn 0.6s ease-out;
+}
+
+@keyframes cardFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .course-card::before {
@@ -465,8 +504,10 @@
 }
 
 .course-card:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  transform: translateY(-16px) scale(1.02);
+  box-shadow: 
+    0 25px 80px rgba(0, 0, 0, 0.15),
+    0 10px 30px rgba(30, 64, 175, 0.1);
   border-color: var(--primary-color);
 }
 
@@ -500,18 +541,21 @@
   position: absolute;
   top: 1.5rem;
   left: 1.5rem;
-  background: rgba(30, 64, 175, 0.95);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.95) 0%, rgba(59, 130, 246, 0.95) 100%);
+  backdrop-filter: blur(15px);
   color: white;
   padding: 0.75rem 1.25rem;
-  border-radius: 25px;
+  border-radius: 30px;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   z-index: 10;
-  box-shadow: 0 4px 20px rgba(30, 64, 175, 0.3);
+  box-shadow: 
+    0 6px 20px rgba(30, 64, 175, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Course Image */
@@ -542,7 +586,8 @@
 }
 
 .course-card:hover .course-image {
-  transform: scale(1.08);
+  transform: scale(1.12);
+  filter: brightness(1.1) contrast(1.05);
 }
 
 /* Image Overlays */
@@ -556,18 +601,21 @@
 }
 
 .online-badge {
-  background: rgba(16, 185, 129, 0.95);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(52, 211, 153, 0.95) 100%);
+  backdrop-filter: blur(15px);
   color: white;
   padding: 0.75rem 1.25rem;
-  border-radius: 25px;
+  border-radius: 30px;
   font-size: 0.75rem;
   font-weight: 700;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+  box-shadow: 
+    0 6px 20px rgba(16, 185, 129, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Course Content */
@@ -650,11 +698,12 @@
 }
 
 .interest-button:hover {
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-6px) scale(1.03);
   box-shadow: 
-    0 20px 60px rgba(102, 126, 234, 0.4),
-    0 10px 30px rgba(118, 75, 162, 0.3),
+    0 25px 80px rgba(102, 126, 234, 0.5),
+    0 15px 40px rgba(118, 75, 162, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e40af 100%);
 }
 
 .interest-button:hover::before {
