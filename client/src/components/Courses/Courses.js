@@ -1,65 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Courses.css';
 import config from '../../config';
 
 const Courses = () => {
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      title: "IC3 Digital Literacy Certification - eCourse",
-      description: "Master the essential skills needed for the IC3 Digital Literacy Certification with this comprehensive eCourse.",
-      category: "Digital Literacy & Office Productivity",
-      image: '/assets/images/ic3.jpg',
-      xp: 250,
-      online: true
-    },
-    {
-      id: 2,
-      title: "Communication Skills for Business (CSB) - eCourse",
-      description: "Master the communication skills that are essential in every business sector with this comprehensive eCourse.",
-      category: "Business & Entrepreneurship",
-      image: '/assets/images/communication.jpg',
-      xp: 200,
-      online: true
-    },
-    {
-      id: 3,
-      title: "Cisco Certified Support Technician (CCST) - Networking Fundamentals Course",
-      description: "Kickstart your career as a Cisco Certified Support Technician (CCST) with this hands-on, comprehensive eCourse.",
-      category: "Networking & IT Certifications",
-      image: '/assets/images/cisco.jpg',
-      xp: 350,
-      online: true
-    },
-    {
-      id: 4,
-      title: "Cisco Certified Support Technician (CCST) - Practice Tests",
-      description: "Prepare for the Cisco Certified Support Technician (CCST) certification with these comprehensive practice tests.",
-      category: "Networking & IT Certifications",
-      image: '/assets/images/app.jpg',
-      xp: 300,
-      online: true
-    },
-    {
-      id: 5,
-      title: "Swift 1 - App Development with Swift",
-      description: "Learn to build real iOS applications from the ground up using Apple's powerful Swift programming language.",
-      category: "Programming & App Development",
-      image: '/assets/images/swift.jpg',
-      xp: 400,
-      online: true
-    },
-    {
-      id: 6,
-      title: "Swift 1 - Apple Swift Certification Exam + Practice Test",
-      description: "Validate your Swift programming skills with Apple's official certification.",
-      category: "Programming & App Development",
-      image: '/assets/images/networking.jpg',
-      xp: 450,
-      online: true
-    }
-  ]);
+  const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -72,25 +19,26 @@ const Courses = () => {
     motivation: '',
     preferredStartDate: ''
   });
-
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
     if (showInterestModal) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
     }
-
-    // Cleanup function to restore scrolling when component unmounts
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
     };
   }, [showInterestModal]);
 
-  // Handle escape key to close modal
+  // Handle escape key to close modal 
   useEffect(() => {
     const handleEscapeKey = (event) => {
       if (event.key === 'Escape' && showInterestModal) {
@@ -107,23 +55,43 @@ const Courses = () => {
     };
   }, [showInterestModal]);
 
-  const [currentStep, setCurrentStep] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
   useEffect(() => {
     fetchCourses();
   }, []);
 
+  // Debug courses state changes
+  useEffect(() => {
+    console.log('🎯 Courses state updated:', courses.length, 'courses');
+    if (courses.length > 0) {
+      console.log('🎯 First course in state:', courses[0]);
+      console.log('🎯 First course ID in state:', courses[0]?._id);
+    }
+  }, [courses]);
+
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${config.API_BASE_URL}/v1/courses`);
+      const apiUrl = `${config.API_BASE_URL}/v1/courses`;
+      console.log('🎯 Fetching courses from:', apiUrl);
+      console.log('🎯 Config API_BASE_URL:', config.API_BASE_URL);
+      
+      const response = await axios.get(apiUrl);
+      
+      console.log('🎯 Courses API response:', response.data);
+      console.log('🎯 Response structure:', {
+        hasData: !!response.data,
+        hasDataData: !!(response.data && response.data.data),
+        isArray: Array.isArray(response.data),
+        dataType: typeof response.data
+      });
       
       if (response.data && response.data.data) {
+        console.log('🎯 Using response.data.data:', response.data.data);
+        console.log('🎯 First course ID:', response.data.data[0]?._id);
         setCourses(response.data.data);
       } else if (Array.isArray(response.data)) {
+        console.log('🎯 Using response.data directly:', response.data);
+        console.log('🎯 First course ID:', response.data[0]?._id);
         setCourses(response.data);
       } else {
         // Fallback sample data
@@ -188,22 +156,23 @@ const Courses = () => {
             enrolledStudents: [],
             status: 'active'
           },
-                  {
-          _id: '6',
-          title: 'Swift 1 - Apple Swift Certification Exam + Practice Test',
-          description: 'Validate your Swift programming skills with Apple\'s official certification.',
-          category: 'Programming & App Development',
-          image: '/assets/images/networking.jpg',
-          points: 450,
-          price: 0,
-          maxStudents: 40,
-          enrolledStudents: [],
-          status: 'active'
-        }
+          {
+            _id: '6',
+            title: 'Swift 1 - Apple Swift Certification Exam + Practice Test',
+            description: 'Validate your Swift programming skills with Apple\'s official certification.',
+            category: 'Programming & App Development',
+            image: '/assets/images/networking.jpg',
+            points: 450,
+            price: 0,
+            maxStudents: 40,
+            enrolledStudents: [],
+            status: 'active'
+          }
         ]);
       }
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('❌ Error fetching courses:', error);
+      console.log('🎯 Using fallback data due to API error');
       // Use fallback data on error
       setCourses([
         {
@@ -292,9 +261,6 @@ const Courses = () => {
   const closeInterestModal = () => {
     setShowInterestModal(false);
     setSelectedCourse(null);
-    setCurrentStep(1);
-    setFormErrors({});
-    setIsSubmitting(false);
     setInterestForm({
       fullName: '',
       email: '',
@@ -304,70 +270,9 @@ const Courses = () => {
       motivation: '',
       preferredStartDate: ''
     });
-  };
-
-  const validateStep1 = () => {
-    const errors = {};
-    
-    if (!interestForm.fullName.trim()) {
-      errors.fullName = 'Full Name is required';
-    } else if (interestForm.fullName.trim().length < 2) {
-      errors.fullName = 'Full Name must be at least 2 characters';
-    }
-    
-    if (!interestForm.email.trim()) {
-      errors.email = 'Email Address is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(interestForm.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-    
-    if (!interestForm.phone.trim()) {
-      errors.phone = 'Phone Number is required';
-    } else if (interestForm.phone.trim().length < 10) {
-      errors.phone = 'Phone Number must be at least 10 digits';
-    }
-    
-    return errors;
-  };
-
-  const validateStep2 = () => {
-    const errors = {};
-    
-    if (!interestForm.education) {
-      errors.education = 'Education Level is required';
-    }
-    
-    if (!interestForm.experience) {
-      errors.experience = 'Work Experience is required';
-    }
-    
-    if (!interestForm.motivation.trim()) {
-      errors.motivation = 'Motivation is required';
-    } else if (interestForm.motivation.trim().length < 20) {
-      errors.motivation = 'Motivation must be at least 20 characters';
-    }
-    
-    if (!interestForm.preferredStartDate) {
-      errors.preferredStartDate = 'Preferred Start Date is required';
-    }
-    
-    return errors;
-  };
-
-  const handleNextStep = () => {
-    const step1Errors = validateStep1();
-    
-    if (Object.keys(step1Errors).length === 0) {
-      setFormErrors({});
-      setCurrentStep(2);
-    } else {
-      setFormErrors(step1Errors);
-    }
-  };
-
-  const handlePreviousStep = () => {
-    setCurrentStep(1);
     setFormErrors({});
+    setCurrentStep(1);
+    setShowSuccess(false);
   };
 
   const handleInputChange = (e) => {
@@ -386,67 +291,82 @@ const Courses = () => {
     }
   };
 
+  const validateStep1 = () => {
+    const errors = {};
+    
+    if (!interestForm.fullName.trim()) {
+      errors.fullName = 'Full name is required';
+    }
+    
+    if (!interestForm.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(interestForm.email)) {
+      errors.email = 'Email is invalid';
+    }
+    
+    if (!interestForm.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const errors = {};
+    
+    if (!interestForm.education) {
+      errors.education = 'Education level is required';
+    }
+    
+    if (!interestForm.experience) {
+      errors.experience = 'Experience level is required';
+    }
+    
+    if (!interestForm.motivation.trim()) {
+      errors.motivation = 'Motivation is required';
+    } else if (interestForm.motivation.trim().length < 20) {
+      errors.motivation = 'Motivation must be at least 20 characters';
+    }
+    
+    if (!interestForm.preferredStartDate) {
+      errors.preferredStartDate = 'Preferred start date is required';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1 && validateStep1()) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1);
+    }
+  };
+
   const handleSubmitInterest = async (e) => {
     e.preventDefault();
     
-    // Validate that a course is selected
-    if (!selectedCourse || !selectedCourse._id || !selectedCourse.title) {
-      alert('Please select a course first. Please refresh the page and try again.');
+    if (!validateStep2()) {
       return;
     }
-
-    // Validate required fields
-    if (!interestForm.fullName.trim() || !interestForm.email.trim() || !interestForm.motivation.trim()) {
-      alert('Please fill in all required fields: Full Name, Email, and Motivation.');
-      return;
-    }
-
-    // Validate motivation length
-    if (interestForm.motivation.trim().length < 10) {
-      alert('Motivation must be at least 10 characters long.');
-      return;
-    }
-
+    
     setIsSubmitting(true);
     
     try {
-      // Prepare the data for submission
-      const interestData = {
+      const response = await axios.post(`${config.API_BASE_URL}/v1/courses/interest`, {
         courseId: selectedCourse._id,
         courseTitle: selectedCourse.title,
-        fullName: interestForm.fullName,
-        email: interestForm.email,
-        phone: interestForm.phone,
-        education: interestForm.education,
-        experience: interestForm.experience,
-        motivation: interestForm.motivation,
-        preferredStartDate: interestForm.preferredStartDate
-      };
-
-      console.log('Submitting interest data:', interestData);
-
-      // Submit course interest to backend
-      const response = await axios.post(`${config.API_BASE_URL}/v1/courses/interest`, interestData);
+        ...interestForm
+      });
       
       if (response.data.success) {
         setShowSuccess(true);
-        // Reset form
-        setInterestForm({
-          fullName: '',
-          email: '',
-          phone: '',
-          education: '',
-          experience: '',
-          motivation: '',
-          preferredStartDate: ''
-        });
-        setCurrentStep(1);
-        
-        // Remove auto-close - user must click OK to exit
-        // setTimeout(() => {
-        //   closeInterestModal();
-        //   setShowSuccess(false);
-        // }, 5000); // Show success message for 5 seconds
       } else {
         throw new Error(response.data.message || 'Failed to submit interest');
       }
@@ -455,36 +375,22 @@ const Courses = () => {
       
       let errorMessage = 'Failed to submit interest. Please try again.';
       
-      if (error.response) {
-        // Server responded with error status
-        if (error.response.status === 500) {
-          errorMessage = 'Server error. Please try again later or contact support.';
-        } else if (error.response.status === 400) {
-          errorMessage = error.response.data?.message || 'Invalid data provided. Please check your information.';
-        } else if (error.response.status === 404) {
-          errorMessage = 'Course not found. Please refresh the page and try again.';
-        } else {
-          errorMessage = error.response.data?.message || `Error: ${error.response.status}`;
-        }
-      } else if (error.request) {
-        // Request was made but no response received
-        errorMessage = 'No response from server. Please check your internet connection and try again.';
-      } else {
-        // Something else happened
-        errorMessage = error.message || 'An unexpected error occurred.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      // Show error message to user
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Filter courses based on search term and category
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.category.toLowerCase().includes(searchTerm.toLowerCase());
+                         course.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -504,136 +410,66 @@ const Courses = () => {
       <div className="courses-hero">
         <div className="hero-pattern"></div>
         <div className="hero-content">
-          <h1>Premium Certifications</h1>
-          <p>UNLOCK YOUR POTENTIAL WITH WORLD-CLASS SKILLS & GLOBAL RECOGNITION</p>
+          <div className="hero-badge">
+            <span>Professional Certifications</span>
+          </div>
+          <h1>Choose Your Learning Path</h1>
+          <p>Browse our comprehensive catalog of industry-recognized certifications and find the perfect course to advance your career</p>
+          <div className="hero-stats">
+            <div className="stat-item">
+              <span className="stat-number">6+</span>
+              <span className="stat-label">Course Categories</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">100%</span>
+              <span className="stat-label">Online Learning</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">24/7</span>
+              <span className="stat-label">Access Available</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="courses-main">
         <div className="content-container">
-          {/* Intro Section */}
-          <div className="courses-intro">
-            <div className="intro-left">
-              <div className="intro-content">
-dffh                <div className="intro-badge">
-                  <span>Premium Platform</span>
+          {/* Course Categories Overview */}
+          <div className="categories-overview">
+            <h2>Explore Our Course Categories</h2>
+            <div className="categories-grid">
+              <div className="category-card">
+                <div className="category-icon">
+                  <i className="fas fa-laptop-code"></i>
                 </div>
-                <h2>Transform Your Future with World-Class Certifications</h2>
-                <p>Unlock your potential with industry-leading courses that open doors to global opportunities. Master in-demand skills and earn credentials that employers worldwide recognize and value.</p>
-                <div className="intro-stats">
-                  <div className="stat-item">
-                    <span className="stat-number">500+</span>
-                    <span className="stat-label">Global Partners</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-number">50K+</span>
-                    <span className="stat-label">Students Certified</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-number">98%</span>
-                    <span className="stat-label">Success Rate</span>
-                  </div>
-                </div>
+                <h3>Digital Literacy & Office Productivity</h3>
+                <p>Master essential computer skills and office applications</p>
+                <span className="course-count">1 Course Available</span>
               </div>
-            </div>
-            <div className="intro-right">
-              <div className="features-card">
-                <div className="card-header">
-                  <div className="header-content">
-                    <div className="brand-section">
-                      <div className="brand-logo">
-                        <i className="fas fa-crown"></i>
-                      </div>
-                      <div className="brand-text">
-                        <h3>JHUB Africa</h3>
-                        <span className="brand-subtitle">Premium Certification Platform</span>
-                      </div>
-                    </div>
-                    <p className="header-description">Your gateway to premium global certifications at prices that make sense. Partnering with world-renowned providers to bring you excellence without the exorbitant costs.</p>
-                  </div>
+              <div className="category-card">
+                <div className="category-icon">
+                  <i className="fas fa-briefcase"></i>
                 </div>
-                
-                <div className="card-body">
-                  <div className="section-divider">
-                    <span className="divider-line"></span>
-                    <span className="divider-text">What Sets Us Apart</span>
-                    <span className="divider-line"></span>
-                  </div>
-                  
-                  <div className="features-list">
-                    <div className="feature-row">
-                      <div className="feature-item">
-                        <div className="feature-icon">
-                          <i className="fas fa-rocket"></i>
-                        </div>
-                        <div className="feature-content">
-                          <h5>Incredible Savings</h5>
-                          <p>Access premium courses at up to 80% off when cohorts fill up</p>
-                        </div>
-                      </div>
-                      
-                      <div className="feature-item">
-                        <div className="feature-icon">
-                          <i className="fas fa-shield-alt"></i>
-                        </div>
-                        <div className="feature-content">
-                          <h5>Zero Risk</h5>
-                          <p>Join our exclusive waiting list completely free - pay only when your spot is confirmed</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="feature-row">
-                      <div className="feature-item">
-                        <div className="feature-icon">
-                          <i className="fas fa-certificate"></i>
-                        </div>
-                        <div className="feature-content">
-                          <h5>Internationally Recognized</h5>
-                          <p>Every certification is backed by authorized global providers</p>
-                        </div>
-                      </div>
-                      
-                      <div className="feature-item">
-                        <div className="feature-icon">
-                          <i className="fas fa-clock"></i>
-                        </div>
-                        <div className="feature-content">
-                          <h5>Learn Your Way</h5>
-                          <p>Study at your own pace on world-class platforms like GMetrix, CertPREP, and Learnkey</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="feature-item feature-wide">
-                      <div className="feature-icon">
-                        <i className="fas fa-hands-helping"></i>
-                      </div>
-                      <div className="feature-content">
-                        <h5>End-to-End Support</h5>
-                        <p>Our experts guide you from first interest to final certification with personalized assistance and continuous guidance throughout your learning journey.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="card-footer">
-                    <div className="trust-indicators">
-                      <div className="trust-item">
-                        <i className="fas fa-check-circle"></i>
-                        <span>ISO Certified</span>
-                      </div>
-                      <div className="trust-item">
-                        <i className="fas fa-check-circle"></i>
-                        <span>24/7 Support</span>
-                      </div>
-                      <div className="trust-item">
-                        <i className="fas fa-check-circle"></i>
-                        <span>Money Back Guarantee</span>
-                      </div>
-                    </div>
-                  </div>
+                <h3>Business & Entrepreneurship</h3>
+                <p>Develop professional communication and business skills</p>
+                <span className="course-count">1 Course Available</span>
+              </div>
+              <div className="category-card">
+                <div className="category-icon">
+                  <i className="fas fa-network-wired"></i>
                 </div>
+                <h3>Networking & IT Certifications</h3>
+                <p>Build expertise in networking and IT infrastructure</p>
+                <span className="course-count">2 Courses Available</span>
+              </div>
+              <div className="category-card">
+                <div className="category-icon">
+                  <i className="fas fa-mobile-alt"></i>
+                </div>
+                <h3>Programming & App Development</h3>
+                <p>Learn to build mobile and web applications</p>
+                <span className="course-count">2 Courses Available</span>
               </div>
             </div>
           </div>
@@ -654,60 +490,56 @@ dffh                <div className="intro-badge">
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="category-filter"
             >
-                              <option value="all">All Categories</option>
-                <option value="Digital Literacy & Office Productivity">Digital Literacy & Office Productivity</option>
-                <option value="Business & Entrepreneurship">Business & Entrepreneurship</option>
-                              <option value="Networking & IT Certifications">Networking & IT Certifications</option>
-                <option value="Programming & App Development">Programming & App Development</option>
+              <option value="all">All Categories</option>
+              <option value="Digital Literacy & Office Productivity">Digital Literacy & Office Productivity</option>
+              <option value="Business & Entrepreneurship">Business & Entrepreneurship</option>
+              <option value="Networking & IT Certifications">Networking & IT Certifications</option>
+              <option value="Programming & App Development">Programming & App Development</option>
             </select>
           </div>
 
-          <div className="lead-capture-notice">
-                            <p><strong>Ready to Transform Your Career?</strong> Express your interest in just 30 seconds - no account needed!</p>
+          <div className="courses-intro">
+            <h2>Available Courses</h2>
+            <p>Select from our carefully curated collection of professional certification courses. Each course is designed to provide practical skills and industry-recognized credentials.</p>
           </div>
 
-          {/* Courses Grid - EXACT LAYOUT FROM SCREENSHOT */}
+          {/* Professional Courses Grid */}
           <div className="courses-grid">
-            {filteredCourses.map((course, index) => {
-              console.log('Rendering course:', course);
-              return (
-                <div key={course._id || index} className="course-card">
-                  {/* 1. CATEGORY LABEL - AT THE VERY TOP */}
-                  <div className="course-category">
-                    {course.category?.toUpperCase() || 'COURSE CATEGORY'}
+            {filteredCourses.map((course, index) => (
+              <div key={course._id || index} className="course-card">
+                {/* Category Badge */}
+                <div className="course-category">
+                  {course.category?.toUpperCase() || 'COURSE CATEGORY'}
+                </div>
+                
+                {/* Course Image */}
+                <div className="course-image-wrapper">
+                  <img 
+                    src={course.image || `/assets/images/ic3.jpg`} 
+                    alt={course.title} 
+                    className="course-image" 
+                    onError={(e) => {
+                      e.target.src = '/assets/images/ic3.jpg';
+                    }}
+                  />
+                  <div className="image-overlays">
+                    <div className="online-badge">ONLINE</div>
                   </div>
-                  
-                  {/* 2. LARGE IMAGE - BELOW CATEGORY, FULL WIDTH */}
-                  <div className="course-image-wrapper">
-                    <img 
-                      src={course.image || `/assets/images/ic3.jpg`} 
-                      alt={course.title} 
-                      className="course-image" 
-                      onError={(e) => {
-                        console.log('Image failed to load:', course.image);
-                        e.target.src = '/assets/images/ic3.jpg';
-                      }}
-                      onLoad={(e) => {
-                        console.log('Image loaded successfully:', course.image, 'Dimensions:', e.target.naturalWidth, 'x', e.target.naturalHeight);
-                      }}
-                    />
-                    {/* IMAGE OVERLAYS - ONLINE BADGE */}
-                    <div className="image-overlays">
-                      <div className="online-badge">ONLINE</div>
-                    </div>
-                  </div>
-                  
-                  {/* 3. COURSE CONTENT - BELOW IMAGE */}
-                  <div className="course-content">
-                    <h3 className="course-title">{course.title}</h3>
-                    <p className="course-description">{course.description}</p>
+                </div>
+                
+                {/* Course Content */}
+                <div className="course-content">
+                  <h3 className="course-title">{course.title}</h3>
+                  <p className="course-description">{course.description}</p>
+                  <div className="course-actions">
                     <button className="interest-button" onClick={() => handleShowInterest(course)}>
-                      I Am Interested →
+                      <i className="fas fa-arrow-right"></i>
+                      Express Interest
                     </button>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
 
           {filteredCourses.length === 0 && (
@@ -720,10 +552,6 @@ dffh                <div className="intro-badge">
         </div>
       </div>
 
-
-
-
-
       {/* Interest Modal */}
       {showInterestModal && (
         <div className="modal-overlay" onClick={closeInterestModal}>
@@ -731,7 +559,7 @@ dffh                <div className="intro-badge">
             {!showSuccess ? (
               <>
                 <div className="modal-header">
-                  <h3>Show Interest in {selectedCourse?.title}</h3>
+                  <h3>Express Interest in {selectedCourse?.title}</h3>
                   <button className="close-btn" onClick={closeInterestModal}>
                     <i className="fas fa-times"></i>
                   </button>
@@ -794,7 +622,7 @@ dffh                <div className="intro-badge">
                       </div>
                       <div className="form-actions">
                         <button type="button" onClick={handleNextStep} className="next-btn">
-                          Next Step →
+                          Next Step <i className="fas fa-arrow-right"></i>
                         </button>
                       </div>
                     </div>
@@ -871,7 +699,7 @@ dffh                <div className="intro-badge">
                       </div>
                       <div className="form-actions">
                         <button type="button" onClick={handlePreviousStep} className="back-btn">
-                          ← Previous Step
+                          <i className="fas fa-arrow-left"></i> Previous Step
                         </button>
                         <button 
                           type="submit" 

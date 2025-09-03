@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { authenticate } = require('../middlewares/authMiddleware');
+const { authenticate } = require('../middlewares/auth');
 
 // Test route to verify routing is working
 router.get('/test', (req, res) => {
@@ -21,7 +21,9 @@ router.post('/reset-password', authController.resetPassword);
 
 // Protected routes
 router.get('/me', authenticate, authController.getMe);
+router.get('/referral-count', authenticate, authController.getReferralCount);
 router.put('/update-profile', authenticate, authController.updateProfile);
 router.post('/change-password', authenticate, authController.changePassword);
+router.get('/courses', authenticate, authController.getUserCourses);
 
 module.exports = router;

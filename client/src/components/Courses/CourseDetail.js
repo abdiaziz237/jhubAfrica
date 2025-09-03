@@ -16,8 +16,16 @@ const CourseDetail = () => {
   useEffect(() => {
     const fetchCourseDetails = async () => {
       try {
+        console.log('🎯 Fetching course details for ID:', id);
+        console.log('🎯 Current URL:', window.location.href);
         setLoading(true);
         setError(null);
+        
+        if (!id || id === 'undefined') {
+          setError('Course ID is missing or invalid');
+          setLoading(false);
+          return;
+        }
         
         const token = localStorage.getItem("authToken");
         if (!token) {
@@ -101,7 +109,21 @@ const CourseDetail = () => {
 
   const handleEnroll = async () => {
     try {
+      console.log('🎯 Attempting to enroll in course with ID:', id);
+      console.log('🎯 Course object:', course);
+      console.log('🎯 Current URL:', window.location.href);
       const token = localStorage.getItem("authToken");
+      
+      if (!id || id === 'undefined') {
+        alert('Course ID is missing or invalid. Cannot enroll.');
+        return;
+      }
+      
+      if (!token) {
+        alert('You must be logged in to enroll in courses.');
+        navigate('/login');
+        return;
+      }
       
       const enrollRes = await fetch(`${API_BASE_URL}/api/v1/courses/${id}/enroll`, {
         method: 'POST',
@@ -121,11 +143,12 @@ const CourseDetail = () => {
         }
       } else {
         const errorData = await enrollRes.json();
-        alert(errorData.message || 'Failed to enroll in the course');
+        console.error('❌ Enrollment failed:', errorData);
+        alert(`Failed to enroll: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error enrolling in course:', error);
-      alert('Failed to enroll in the course');
+      console.error('❌ Error enrolling in course:', error);
+      alert(`Failed to enroll in the course: ${error.message}`);
     }
   };
 
@@ -256,10 +279,6 @@ const CourseDetail = () => {
           <div className="course-actions-section">
             <div className="course-status-info">
               <div className="status-item">
-                <i className="fas fa-users"></i>
-                <span>{course.enrolledStudents || 0} students enrolled</span>
-              </div>
-              <div className="status-item">
                 <i className="fas fa-clock"></i>
                 <span>{course.duration || 'Duration TBD'}</span>
               </div>
@@ -287,12 +306,7 @@ const CourseDetail = () => {
                     Join Waitlist
                   </button>
                 )
-              ) : (
-                <button className="btn-enroll-now" onClick={handleEnroll}>
-                  <i className="fas fa-sign-in-alt"></i>
-                  Enroll Now
-                </button>
-              )}
+              ) : null}
               
 
             </div>
@@ -326,10 +340,7 @@ const CourseDetail = () => {
                 <span className="label">Category:</span>
                 <span className="value">{course.category || 'General'}</span>
               </div>
-              <div className="info-item">
-                <span className="label">Instructor:</span>
-                <span className="value">{course.instructor || 'TBD'}</span>
-              </div>
+
               <div className="info-item">
                 <span className="label">Language:</span>
                 <span className="value">{course.language || 'English'}</span>

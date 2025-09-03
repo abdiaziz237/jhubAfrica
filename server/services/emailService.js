@@ -6,11 +6,13 @@ const nodemailerExpressHandlebars = require("nodemailer-express-handlebars").def
 
 // Create transporter
 const transporter = nodemailer.createTransport({
-  host: "sandbox.smtp.mailtrap.io",
-  port: 2525,
+  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
-    user: "f966ff1cf28e12", // Mailtrap credentials from test-email.js
-    pass: "1d8ae27e2fd311",
+    user: 'sizumoha458@gmail.com', // jhubafrica Gmail account
+    pass: 'zzlw bblw rvql mcju', // App password for jhubafrica
   },
 });
 
@@ -47,66 +49,75 @@ function generatePasswordResetToken() {
  * Send verification email
  */
 async function sendVerificationEmail(email, token) {
-  const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
+  const verificationUrl = `${baseUrl}/api/v1/auth/verify-email?token=${token}`;
 
   const mailOptions = {
-    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    from: `"jhubafrica" <sizumoha458@gmail.com>`,
     to: email,
-    subject: "Verify Your Email - JHUB Africa",
+    subject: "Verify Your Email - jhubafrica",
     template: "verify-email", // views/emails/verify-email.hbs
     context: {
       verificationUrl,
-      subject: "Verify Your Email - JHUB Africa",
+      subject: "Verify Your Email - jhubafrica",
       year: new Date().getFullYear(),
-      supportUrl: `${process.env.BASE_URL}/support`,
+      supportUrl: `${baseUrl}/support`,
     },
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`📧 Verification email sent to ${email}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`📧 Verification email sent to ${email}`);
+  }
 }
 
 /**
  * Send password reset email
  */
 async function sendPasswordResetEmail(email, token) {
-  const resetUrl = `${process.env.BASE_URL}/reset-password?token=${token}`;
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
   const mailOptions = {
-    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    from: `"jhubafrica" <sizumoha458@gmail.com>`,
     to: email,
-    subject: "Reset Your Password - JHUB Africa",
+    subject: "Reset Your Password - jhubafrica",
     template: "reset-password", // views/emails/reset-password.hbs
     context: {
       resetUrl,
-      subject: "Reset Your Password - JHUB Africa",
+      subject: "Reset Your Password - jhubafrica",
       year: new Date().getFullYear(),
-      supportUrl: `${process.env.BASE_URL}/support`,
+      supportUrl: `${baseUrl}/support`,
     },
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`📧 Password reset email sent to ${email}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`📧 Password reset email sent to ${email}`);
+  }
 }
 
 /**
  * Send password reset success confirmation email
  */
 async function sendPasswordResetSuccessEmail(email) {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
   const mailOptions = {
-    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    from: `"jhubafrica" <sizumoha458@gmail.com>`,
     to: email,
-    subject: "Password Reset Successful - JHUB Africa",
+    subject: "Password Reset Successful - jhubafrica",
     template: "password-reset-success", // views/emails/password-reset-success.hbs
     context: {
-      subject: "Password Reset Successful - JHUB Africa",
+      subject: "Password Reset Successful - jhubafrica",
       year: new Date().getFullYear(),
-      supportUrl: `${process.env.BASE_URL}/support`,
+      supportUrl: `${baseUrl}/support`,
     },
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`📧 Password reset success email sent to ${email}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`📧 Password reset success email sent to ${email}`);
+  }
 }
 
 /**
@@ -114,7 +125,7 @@ async function sendPasswordResetSuccessEmail(email) {
  */
 async function sendEmail(options) {
   const mailOptions = {
-    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    from: `"jhubafrica" <sizumoha458@gmail.com>`,
     to: options.to,
     subject: options.subject,
     template: options.template,
@@ -122,7 +133,9 @@ async function sendEmail(options) {
   };
 
   const result = await transporter.sendMail(mailOptions);
-  console.log(`📧 Email sent to ${options.to}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`📧 Email sent to ${options.to}`);
+  }
   return result;
 }
 
@@ -130,48 +143,54 @@ async function sendEmail(options) {
  * Send course interest confirmation email
  */
 async function sendCourseInterestConfirmation(email, fullName, courseTitle) {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
   const mailOptions = {
-    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    from: `"jhubafrica" <sizumoha458@gmail.com>`,
     to: email,
-    subject: "Course Interest Confirmation - JHUB Africa",
+    subject: "Course Interest Confirmation - jhubafrica",
     template: "course-interest-confirmation", // views/emails/course-interest-confirmation.hbs
     context: {
       fullName,
       courseTitle,
-      subject: "Course Interest Confirmation - JHUB Africa",
+      subject: "Course Interest Confirmation - jhubafrica",
       year: new Date().getFullYear(),
-      supportUrl: `${process.env.BASE_URL}/support`,
-      coursesUrl: `${process.env.BASE_URL}/courses`,
+      supportUrl: `${baseUrl}/support`,
+      coursesUrl: `${baseUrl}/courses`,
     },
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`📧 Course interest confirmation email sent to ${email}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`📧 Course interest confirmation email sent to ${email}`);
+  }
 }
 
 /**
  * Send course interest status update email
  */
 async function sendCourseInterestStatusUpdate(email, fullName, courseTitle, status, adminResponse) {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
   const mailOptions = {
-    from: `"JHUB Africa" <${process.env.EMAIL_USER}>`,
+    from: `"jhubafrica" <sizumoha458@gmail.com>`,
     to: email,
-    subject: `Course Interest ${status.charAt(0).toUpperCase() + status.slice(1)} - JHUB Africa`,
+    subject: `Course Interest ${status.charAt(0).toUpperCase() + status.slice(1)} - jhubafrica`,
     template: "course-interest-status", // views/emails/course-interest-status.hbs
     context: {
       fullName,
       courseTitle,
       status,
       adminResponse,
-      subject: `Course Interest ${status.charAt(0).toUpperCase() + status.slice(1)} - JHUB Africa`,
+      subject: `Course Interest ${status.charAt(0).toUpperCase() + status.slice(1)} - jhubafrica`,
       year: new Date().getFullYear(),
-      supportUrl: `${process.env.BASE_URL}/support`,
-      coursesUrl: `${process.env.BASE_URL}/courses`,
+      supportUrl: `${baseUrl}/support`,
+      coursesUrl: `${baseUrl}/courses`,
     },
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`📧 Course interest status update email sent to ${email}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`📧 Course interest status update email sent to ${email}`);
+  }
 }
 
 module.exports = {

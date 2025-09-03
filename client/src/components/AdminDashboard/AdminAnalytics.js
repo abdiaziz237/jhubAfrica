@@ -155,7 +155,7 @@ const AdminAnalytics = () => {
   return (
     <div className="admin-analytics">
       <div className="admin-header">
-        <h1>📊 Analytics Dashboard</h1>
+        <h1><i className="fas fa-chart-bar"></i> Analytics Dashboard</h1>
         <div className="admin-actions">
           <select 
             value={selectedPeriod} 
@@ -171,13 +171,13 @@ const AdminAnalytics = () => {
             className="admin-btn secondary" 
             onClick={handleRefresh}
           >
-            🔄 Refresh
+                         <i className="fas fa-sync-alt"></i> Refresh
           </button>
           <button 
             className="admin-btn secondary" 
             onClick={() => navigate('/admin/dashboard')}
           >
-            ← Back to Dashboard
+                         <i className="fas fa-arrow-left"></i> Back to Dashboard
           </button>
         </div>
       </div>
@@ -192,7 +192,9 @@ const AdminAnalytics = () => {
       {/* Key Metrics Overview */}
       <div className="analytics-overview">
         <div className="metric-card">
-          <div className="metric-icon">👥</div>
+                     <div className="metric-icon">
+             <i className="fas fa-users"></i>
+           </div>
           <div className="metric-content">
             <h3>Total Users</h3>
             <p className="metric-number">{getTotalUsers().toLocaleString()}</p>
@@ -201,7 +203,9 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="metric-card">
-          <div className="metric-icon">📚</div>
+                     <div className="metric-icon">
+             <i className="fas fa-book"></i>
+           </div>
           <div className="metric-content">
             <h3>Total Courses</h3>
             <p className="metric-number">{getTotalCourses().toLocaleString()}</p>
@@ -210,7 +214,9 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="metric-card">
-          <div className="metric-icon">💰</div>
+                     <div className="metric-icon">
+             <i className="fas fa-money-bill-wave"></i>
+           </div>
           <div className="metric-content">
             <h3>Total Revenue</h3>
             <p className="metric-number">₦{(getTotalRevenue() / 1000).toFixed(0)}K</p>
@@ -219,7 +225,9 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="metric-card">
-          <div className="metric-icon">🟢</div>
+                     <div className="metric-icon">
+             <i className="fas fa-circle"></i>
+           </div>
           <div className="metric-content">
             <h3>Active Users</h3>
             <p className="metric-number">{getActiveUsers().toLocaleString()}</p>
@@ -231,7 +239,7 @@ const AdminAnalytics = () => {
       {/* Charts and Data Visualization */}
       <div className="analytics-charts">
         <div className="chart-section">
-          <h3>📈 User Growth Trends</h3>
+                     <h3><i className="fas fa-chart-line"></i> User Growth Trends</h3>
           <div className="chart-container">
             {analytics.userGrowth && Array.isArray(analytics.userGrowth) && analytics.userGrowth.length > 0 ? (
               <div className="chart-data">
@@ -248,7 +256,7 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="chart-section">
-          <h3>📊 Course Performance</h3>
+                     <h3><i className="fas fa-chart-bar"></i> Course Performance</h3>
           <div className="chart-container">
             {analytics.courseStats && Array.isArray(analytics.courseStats) && analytics.courseStats.length > 0 ? (
               <div className="chart-data">
@@ -265,7 +273,7 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="chart-section">
-          <h3>💰 Revenue Analytics</h3>
+                     <h3><i className="fas fa-chart-pie"></i> Revenue Analytics</h3>
           <div className="chart-container">
             {analytics.revenueData && Array.isArray(analytics.revenueData) && analytics.revenueData.length > 0 ? (
               <div className="chart-data">
@@ -282,7 +290,7 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="chart-section">
-          <h3>🌍 Geographic Distribution</h3>
+                     <h3><i className="fas fa-globe"></i> Geographic Distribution</h3>
           <div className="chart-container">
             {analytics.geographicData && Array.isArray(analytics.geographicData) && analytics.geographicData.length > 0 ? (
               <div className="chart-data">
@@ -301,7 +309,7 @@ const AdminAnalytics = () => {
 
       {/* Real-time Statistics */}
       <div className="real-time-stats">
-        <h3>🕒 Real-time Statistics</h3>
+                 <h3><i className="fas fa-clock"></i> Real-time Statistics</h3>
         <div className="stats-grid">
           {analytics.realTimeStats && typeof analytics.realTimeStats === 'object' && Object.keys(analytics.realTimeStats).length > 0 ? (
             Object.entries(analytics.realTimeStats).map(([key, value]) => (
@@ -321,16 +329,16 @@ const AdminAnalytics = () => {
 
       {/* Data Export and Actions */}
       <div className="analytics-actions">
-        <h3>📤 Data Export & Actions</h3>
+                 <h3><i className="fas fa-download"></i> Data Export & Actions</h3>
         <div className="action-buttons">
           <button className="admin-btn secondary" disabled>
-            📊 Export Analytics Report
+                         <i className="fas fa-file-export"></i> Export Analytics Report
           </button>
           <button className="admin-btn secondary" disabled>
-            📈 Generate Insights
+                         <i className="fas fa-lightbulb"></i> Generate Insights
           </button>
           <button className="admin-btn secondary" disabled>
-            🔔 Set Alerts
+                         <i className="fas fa-bell"></i> Set Alerts
           </button>
         </div>
         <p className="feature-note">

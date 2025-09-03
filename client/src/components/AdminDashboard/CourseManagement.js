@@ -714,7 +714,7 @@ const CourseManagement = () => {
       {/* Header */}
       <div className="admin-header">
         <div className="header-content">
-        <h1>📚 Course Management</h1>
+        <h1><i className="fas fa-book"></i> Course Management</h1>
           <p>Create, edit, and manage all courses</p>
         </div>
         <div className="admin-actions">
@@ -728,7 +728,7 @@ const CourseManagement = () => {
             className="admin-btn secondary" 
             onClick={() => navigate('/admin/dashboard')}
           >
-            ← Back to Dashboard
+            <i className="fas fa-arrow-left"></i> Back to Dashboard
           </button>
         </div>
       </div>
@@ -736,7 +736,9 @@ const CourseManagement = () => {
       {/* Statistics Cards */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-icon">📚</div>
+                          <div className="stat-icon">
+                  <i className="fas fa-book"></i>
+                </div>
           <div className="stat-content">
             <h3>Total Courses</h3>
             <p className="stat-number">{stats.total}</p>
@@ -757,7 +759,9 @@ const CourseManagement = () => {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">📝</div>
+                          <div className="stat-icon">
+                  <i className="fas fa-edit"></i>
+                </div>
           <div className="stat-content">
             <h3>Draft Courses</h3>
             <p className="stat-number">{stats.draft}</p>

@@ -56,10 +56,32 @@ app.set('trust proxy', 1);
 // =======================
 connectDB();
 
-mongoose.connection.on('connecting', () => console.log('⏳ Connecting to MongoDB...'));
-mongoose.connection.on('connected', () => console.log('✅ MongoDB connected successfully'));
+mongoose.connection.on('connecting', () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('⏳ Connecting to MongoDB...');
+  }
+});
+mongoose.connection.on('connected', async () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ MongoDB connected successfully');
+  }
+  
+  // Auto-correct system data on startup
+  try {
+    const DataConsistencyService = require('./services/dataConsistencyService');
+    console.log('🔄 Running automatic system data correction on startup...');
+    await DataConsistencyService.autoCorrectSystem();
+    console.log('✅ System data correction completed on startup');
+  } catch (error) {
+    console.error('❌ Startup data correction failed:', error.message);
+  }
+});
 mongoose.connection.on('error', (err) => console.error('❌ MongoDB connection error:', err.message));
-mongoose.connection.on('disconnected', () => console.log('⚠️ MongoDB disconnected'));
+mongoose.connection.on('disconnected', () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('⚠️ MongoDB disconnected');
+  }
+});
 
 // =======================
 // 2. Security Middleware
@@ -116,12 +138,18 @@ const clientPublicPath = path.join(__dirname, '../client/public');
 
 if (fs.existsSync(clientBuildPath)) {
   app.use(express.static(clientBuildPath));
-  console.log('📦 Serving static files from:', clientBuildPath);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('📦 Serving static files from:', clientBuildPath);
+  }
 } else if (fs.existsSync(clientPublicPath)) {
   app.use(express.static(clientPublicPath));
-  console.log('📦 Serving static files from:', clientPublicPath);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('📦 Serving static files from:', clientPublicPath);
+  }
 } else {
-  console.log('⚠️ No frontend build/public found. API only.');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('⚠️ No frontend build/public found. API only.');
+  }
 }
 
 // =======================
@@ -132,7 +160,71 @@ loadRoutes(app);
 // Manually mount auth routes to ensure they work
 const authRoutes = require('./routes/auth');
 app.use('/api/v1/auth', authRoutes);
-console.log('✅ Auth routes manually mounted at /api/v1/auth');
+if (process.env.NODE_ENV !== 'production') {
+  console.log('✅ Auth routes manually mounted at /api/v1/auth');
+}
+
+// Clear enrollments route (no auth required for testing)
+app.delete('/api/v1/clear-enrollments', async (req, res) => {
+  try {
+    console.log('🗑️ Clearing all enrollments for testing');
+    
+    const Enrollment = require('./models/Enrollment');
+    
+    // Count existing enrollments
+    const existingCount = await Enrollment.countDocuments();
+    console.log(`📊 Found ${existingCount} existing enrollments`);
+    
+    if (existingCount === 0) {
+      return res.json({
+        success: true,
+        message: 'No enrollments to delete',
+        deletedCount: 0
+      });
+    }
+    
+    // Delete all enrollments
+    const result = await Enrollment.deleteMany({});
+    
+    console.log(`🗑️ Deleted ${result.deletedCount} enrollments`);
+    
+    res.json({
+      success: true,
+      message: `Successfully deleted ${result.deletedCount} enrollments`,
+      deletedCount: result.deletedCount
+    });
+    
+  } catch (error) {
+    console.error('Error clearing enrollments:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear enrollments',
+      message: error.message
+    });
+  }
+});
+
+// Manually mount admin routes to fix routing conflicts
+const adminRoutes = require('./routes/admin');
+app.use('/api/v1/admin', adminRoutes);
+if (process.env.NODE_ENV !== 'production') {
+  console.log('✅ Admin routes manually mounted at /api/v1/admin');
+}
+
+// Mount additional routes
+app.use('/api/v1/courses', require('./routes/course'));
+app.use('/api/v1/dashboard', require('./routes/dashboard'));
+app.use('/api/v1/points', require('./routes/points'));
+app.use('/api/v1/user', require('./routes/user'));
+app.use('/api/v1/referrals', require('./routes/referralRoutes'));
+app.use('/api/v1/system', require('./routes/dataConsistencyRoutes'));
+console.log('✅ Points routes mounted at /api/v1/points');
+console.log('✅ Data consistency routes mounted at /api/v1/system');
+
+
+if (process.env.NODE_ENV !== 'production') {
+  console.log('✅ All API routes mounted successfully');
+}
 
 // =======================
 // 8. Health check
@@ -198,27 +290,37 @@ app.use(errorHandler);
 // =======================
 const PORT = process.env.PORT || 5001; // use environment variable or default to 5001
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`✅ Health: http://localhost:${PORT}/api/health`);
-  console.log(`✅ DB test: http://localhost:${PORT}/api/test-db`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(`✅ Health: http://localhost:${PORT}/api/health`);
+    console.log(`✅ DB test: http://localhost:${PORT}/api/test-db`);
+  }
 });
 
 // =======================
 // 14. Graceful shutdown
 // =======================
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM RECEIVED. Shutting down...');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🛑 SIGTERM RECEIVED. Shutting down...');
+  }
   server.close(() => {
     mongoose.connection.close();
-    console.log('✅ Process terminated');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Process terminated');
+    }
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 SIGINT RECEIVED. Shutting down...');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🛑 SIGINT RECEIVED. Shutting down...');
+  }
   server.close(() => {
     mongoose.connection.close();
-    console.log('✅ Process terminated');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Process terminated');
+    }
   });
 });
 

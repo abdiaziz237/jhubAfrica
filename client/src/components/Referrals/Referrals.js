@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Referrals.css";
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
+import config from "../../config";
 
 export default function Referrals() {
   const [user, setUser] = useState(null);
@@ -29,7 +28,7 @@ export default function Referrals() {
     }
 
         // Fetch user data
-        const userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        const userResponse = await fetch(`${config.API_BASE_URL}/v1/auth/me`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -63,7 +62,7 @@ export default function Referrals() {
 
         // Fetch real referrals from database
         try {
-          const referralsRes = await fetch(`${API_BASE_URL}/api/v1/referrals`, {
+          const referralsRes = await fetch(`${config.API_BASE_URL}/v1/referrals`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -72,18 +71,16 @@ export default function Referrals() {
           
           if (referralsRes.ok) {
             const referralsData = await referralsRes.json();
-            if (referralsData.success && referralsData.data) {
-              setReferrals(referralsData.data);
+            if (referralsData.success && referralsData.referrals) {
+              setReferrals(referralsData.referrals);
               
-              // Update stats with real data
-              const completedRefs = referralsData.data.filter(ref => ref.status === 'completed').length;
-              const pendingRefs = referralsData.data.filter(ref => ref.status === 'pending').length;
-              
-              setReferralStats(prev => ({
-                ...prev,
-                pendingReferrals: pendingRefs,
-                completedReferrals: completedRefs
-              }));
+              // Update stats with real data from API response
+              setReferralStats({
+                totalReferrals: referralsData.totalReferrals || 0,
+                pointsEarned: referralsData.pointsEarned || 0,
+                bonusXP: referralsData.totalReferrals * 50 || 0,
+                pendingReferrals: referralsData.referrals.filter(ref => ref.status === 'Registered').length || 0
+              });
             } else {
               setReferrals([]);
             }

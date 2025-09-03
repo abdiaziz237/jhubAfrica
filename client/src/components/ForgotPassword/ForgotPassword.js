@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "./ForgotPassword.css";
-
-const API_BASE_URL = "http://localhost:5001"; // change for production
+import config from "../../config";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -21,7 +20,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+      const res = await fetch(`${config.API_BASE_URL}/v1/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

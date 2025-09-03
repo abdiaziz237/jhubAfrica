@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import "./ResetPassword.css";
-
-const API_BASE_URL = "http://localhost:5001"; // change for production
+import config from "../../config";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -36,7 +35,7 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
+      const res = await fetch(`${config.API_BASE_URL}/v1/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword: password, confirmPassword }),

@@ -1,4 +1,4 @@
-const { authenticate } = require('./auth');
+const { authenticate } = require('./authMiddleware');
 const { authorizeAdmin } = require('./admin');
 const { validate, validateJoi } = require('./validation');
 const rateLimit = require('express-rate-limit');

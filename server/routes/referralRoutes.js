@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middlewares/auth'); // ✅ Correct import
+const { authenticate } = require('../middlewares/authMiddleware');
 const User = require('../models/user');
 
 // @route GET /api/referrals
@@ -14,7 +14,7 @@ router.get('/', authenticate, async (req, res) => {  // ✅ Use authenticate fun
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const referrals = await User.find({ referredBy: currentUser.referralCode });
+    const referrals = await User.find({ referredBy: currentUser._id });
 
     res.json({
       code: currentUser.referralCode,

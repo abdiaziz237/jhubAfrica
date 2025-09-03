@@ -10,20 +10,26 @@ const connectDB = async () => {
       maxPoolSize: 10,                  // max DB connections in pool
     });
 
-    console.log(
-      `✅ MongoDB Connected: ${conn.connection.host}`.cyan.underline
-    );
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(
+        `✅ MongoDB Connected: ${conn.connection.host}`.cyan.underline
+      );
+    }
   } catch (error) {
     console.error(`❌ Error: ${error.message}`.red.bold);
 
     // Don't kill the server if DB is unavailable
-    console.log('⚠️  Server running without database connection'.yellow);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('⚠️  Server running without database connection'.yellow);
+    }
   }
 };
 
 // Extra event listeners for mongoose connection state
 mongoose.connection.on('connected', () => {
-  console.log('🔗 Mongoose connected to DB'.green.bold);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔗 Mongoose connected to DB'.green.bold);
+  }
 });
 
 mongoose.connection.on('error', (err) => {
@@ -31,13 +37,17 @@ mongoose.connection.on('error', (err) => {
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('⚠️  Mongoose disconnected'.yellow.bold);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('⚠️  Mongoose disconnected'.yellow.bold);
+  }
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   await mongoose.connection.close();
-  console.log('🔌 Mongoose connection closed due to app termination'.yellow);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔌 Mongoose connection closed due to app termination'.yellow);
+  }
   process.exit(0);
 });
 

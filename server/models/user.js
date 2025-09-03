@@ -104,6 +104,16 @@ const userSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Points cannot be negative']
   },
+  enrolledCourses: {
+    type: Number,
+    default: 0,
+    min: [0, 'Enrolled courses cannot be negative']
+  },
+  completedCourses: {
+    type: Number,
+    default: 0,
+    min: [0, 'Completed courses cannot be negative']
+  },
   role: {
     type: String,
     enum: {
@@ -249,12 +259,6 @@ const userSchema = new mongoose.Schema({
 // Hash password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-
-  // Temporarily commented out to fix registration issue
-  // // Ensure passwordConfirm is provided during registration
-  // if (this.isNew && !this.passwordConfirm) {
-  //   return next(new Error('Password confirmation is required during registration'));
-  // }
 
   try {
     this.password = await bcrypt.hash(this.password, 12);

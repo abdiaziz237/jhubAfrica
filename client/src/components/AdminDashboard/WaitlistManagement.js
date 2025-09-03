@@ -781,7 +781,7 @@ const WaitlistManagement = () => {
       
       <div className="page-header">
         <div className="header-content">
-          <h1>📋 Waitlist Management</h1>
+          <h1><i className="fas fa-clipboard-list"></i> Waitlist Management</h1>
           <p>Professional waitlist management and cohort formation system</p>
         </div>
         <div className="header-actions">
@@ -789,7 +789,7 @@ const WaitlistManagement = () => {
             className="admin-btn secondary" 
             onClick={() => window.location.href = '/admin/dashboard'}
           >
-            ← Back to Dashboard
+            <i className="fas fa-arrow-left"></i> Back to Dashboard
           </button>
         </div>
       </div>
@@ -849,7 +849,9 @@ const WaitlistManagement = () => {
           <div className="waitlist-stats">
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="stat-icon">👥</div>
+                <div className="stat-icon">
+                  <i className="fas fa-users"></i>
+                </div>
                 <div className="stat-content">
                   <h3>{waitlistData.stats?.total || 0}</h3>
                   <p>Total Waitlist</p>
@@ -1037,7 +1039,9 @@ const WaitlistManagement = () => {
       {!selectedCourse && (
         <div className="no-course-selected">
           <div className="empty-state">
-            <div className="empty-icon">📚</div>
+                            <div className="empty-icon">
+                  <i className="fas fa-book"></i>
+                </div>
             <h3>Select a Course</h3>
             <p>Choose a course from the dropdown above to view its waitlist and manage cohorts.</p>
           </div>

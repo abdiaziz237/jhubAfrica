@@ -147,7 +147,7 @@ const UserVerificationManagement = () => {
             className="admin-btn secondary" 
             onClick={() => navigate('/admin/dashboard')}
           >
-            ← Back to Dashboard
+            <i className="fas fa-arrow-left"></i> Back to Dashboard
           </button>
         </div>
         

@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middlewares/auth');
+const { authenticate, authorizeRole } = require('../middlewares/authMiddleware');
 const {
   getPlatformSettings,
   updatePlatformSettings,
@@ -12,8 +12,8 @@ const {
 } = require('../controllers/settingsController');
 
 // All routes require admin authentication
-router.use(protect);
-router.use(authorize('admin'));
+router.use(authenticate);
+router.use(authorizeRole('admin'));
 
 // @route   GET /api/v1/admin/settings
 // @desc    Get platform settings

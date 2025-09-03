@@ -15,6 +15,8 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -23,9 +25,12 @@ const Register = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const togglePasswordVisibility = (id) => {
-    const input = document.getElementById(id);
-    input.type = input.type === "password" ? "text" : "password";
+  const togglePasswordVisibility = (field) => {
+    if (field === 'password') {
+      setShowPassword(!showPassword);
+    } else if (field === 'passwordConfirm') {
+      setShowPasswordConfirm(!showPasswordConfirm);
+    }
   };
 
   const checkPasswordStrength = (password) => {
@@ -144,7 +149,7 @@ const Register = () => {
             </label>
             <div className="input-wrapper">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 className={`form-control ${errors.password ? 'error' : ''}`}
                 placeholder="Create a strong password"
@@ -158,8 +163,9 @@ const Register = () => {
                 type="button" 
                 className="password-toggle"
                 onClick={() => togglePasswordVisibility("password")}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                <i className="fas fa-eye"></i>
+                <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
               </button>
             </div>
             {passwordStrength && (
@@ -178,7 +184,7 @@ const Register = () => {
             </label>
             <div className="input-wrapper">
               <input
-                type="password"
+                type={showPasswordConfirm ? "text" : "password"}
                 id="passwordConfirm"
                 className={`form-control ${errors.passwordConfirm ? 'error' : ''}`}
                 placeholder="Confirm your password"
@@ -189,8 +195,9 @@ const Register = () => {
                 type="button" 
                 className="password-toggle"
                 onClick={() => togglePasswordVisibility("passwordConfirm")}
+                aria-label={showPasswordConfirm ? "Hide password confirmation" : "Show password confirmation"}
               >
-                <i className="fas fa-eye"></i>
+                <i className={`fas ${showPasswordConfirm ? "fa-eye-slash" : "fa-eye"}`}></i>
               </button>
             </div>
             {errors.passwordConfirm && <span className="field-error">{errors.passwordConfirm}</span>}

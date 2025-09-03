@@ -20,27 +20,28 @@ const authenticate = async (req, res, next) => {
     }
 
     const token = tokenParts[1];
-    console.log('🔍 Token received:', token.substring(0, 20) + '...');
+    // console.log('🔍 Token received:', token.substring(0, 20) + '...');
 
     // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('🔍 JWT decoded:', { userId: decoded._id, email: decoded.email });
+    // console.log('🔍 JWT decoded:', { userId: decoded._id, email: decoded.email });
 
-    // Find user by ID
-    const user = await User.findById(decoded._id).select('-password');
+    // Find user by ID (handle both _id and userId fields)
+    const userId = decoded._id || decoded.userId;
+    const user = await User.findById(userId).select('-password');
     
     if (!user) {
-      console.log('🔍 User not found in database');
+      // console.log('🔍 User not found in database');
       return res.status(401).json({ error: 'User not found' });
     }
 
     // Check if password was changed after token issued
     if (user.passwordChangedAfter && user.passwordChangedAfter(decoded.iat)) {
-      console.log('🔍 Password changed after token issued');
+      // console.log('🔍 Password changed after token issued');
       return res.status(401).json({ error: 'Session expired. Please login again' });
     }
 
-    console.log('🔍 User authenticated:', { id: user._id, email: user.email, role: user.role });
+    // console.log('🔍 User authenticated:', { id: user._id, email: user.email, role: user.role });
 
     // Attach user to request
     req.user = user;

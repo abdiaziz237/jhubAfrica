@@ -53,7 +53,7 @@ const courseInterestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'reviewed', 'approved', 'rejected', 'contacted'],
+    enum: ['pending', 'reviewed', 'approved', 'rejected', 'contacted', 'enrolled'],
     default: 'pending'
   },
   adminNotes: {

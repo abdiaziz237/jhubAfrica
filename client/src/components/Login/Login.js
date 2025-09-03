@@ -7,6 +7,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -32,20 +33,40 @@ export default function Login() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      
+      if (!res.ok) {
+        // Handle specific error cases
+        if (res.status === 401) {
+          throw new Error("Invalid email or password. Please check your credentials and try again.");
+        } else if (res.status === 403) {
+          throw new Error("Your account is pending verification by an administrator. Please wait for approval.");
+        } else {
+          throw new Error(data.message || "Login failed. Please try again.");
+        }
+      }
 
       if (!data.token) throw new Error("No authentication token received");
 
-      localStorage.setItem("authToken", data.token);
-      
-      // Check if user needs to be redirected to dashboard or verification page
-      if (data.user && data.user.verificationStatus === 'pending') {
-        // Show verification pending message
-        setError("Your account is pending verification by an administrator. Please wait for approval.");
-        return;
+      // Store token based on user role
+      if (data.user && data.user.role === 'admin') {
+        localStorage.setItem("adminToken", data.token);
+        localStorage.setItem("adminUser", JSON.stringify(data.user));
+        // Redirect admin to admin dashboard
+        window.location.href = "/admin/dashboard";
+      } else {
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        
+        // Check if user needs to be redirected to dashboard or verification page
+        if (data.user && data.user.verificationStatus === 'pending') {
+          // Show verification pending message
+          setError("Your account is pending verification by an administrator. Please wait for approval.");
+          return;
+        }
+        
+        // Redirect to dashboard on successful login
+        window.location.href = "/dashboard";
       }
-      
-      window.location.href = "/dashboard";
     } catch (err) {
       setError(err.message);
     } finally {
@@ -68,22 +89,19 @@ export default function Login() {
             </div>
             <div className="auth-brand">
               <h2>JHUB Africa</h2>
-              <span>Premium Learning Platform</span>
+              <span>Premium Learning</span>
             </div>
           </div>
           
           <div className="auth-welcome">
             <h1>Welcome Back</h1>
-            <p>Continue your journey to professional excellence</p>
+            <p>Sign in to your account</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label className="form-label">
-              <i className="fas fa-envelope"></i>
-              Email Address
-            </label>
+            <label className="form-label">Email Address</label>
             <input
               type="email"
               className="form-control"
@@ -95,21 +113,23 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">
-              <i className="fas fa-lock"></i>
-              Password
-            </label>
+            <label className="form-label">Password</label>
             <div className="input-wrapper">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="form-control"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <button type="button" className="password-toggle">
-                <i className="fas fa-eye"></i>
+              <button 
+                type="button" 
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
               </button>
             </div>
           </div>
@@ -117,22 +137,12 @@ export default function Login() {
           {error && (
             <div className="error-message">
               <i className="fas fa-exclamation-circle"></i>
-              {error}
+              <span>{error}</span>
             </div>
           )}
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? (
-              <span className="btn-content">
-                <i className="fas fa-spinner fa-spin"></i>
-                <span>Signing In...</span>
-              </span>
-            ) : (
-              <span className="btn-content">
-                <i className="fas fa-sign-in-alt"></i>
-                <span>Sign In</span>
-              </span>
-            )}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
@@ -141,13 +151,6 @@ export default function Login() {
             <a href="/forgot-password">
               <i className="fas fa-key"></i>
               Forgot your password?
-            </a>
-          </div>
-          
-          <div className="verification-links">
-            <a href="/verification-status">
-              <i className="fas fa-user-check"></i>
-              Check Verification Status
             </a>
           </div>
           

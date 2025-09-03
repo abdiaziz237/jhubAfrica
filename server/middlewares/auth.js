@@ -43,6 +43,8 @@ const protect = async (req, res, next) => {
       });
     }
 
+
+
     // 4. Check if password changed after token issued
     if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
       logSecurityEvent('AUTH_PASSWORD_CHANGED', {

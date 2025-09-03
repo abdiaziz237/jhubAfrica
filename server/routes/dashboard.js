@@ -1,15 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const dashboardController = require('../controllers/dashboardController');
-const { authenticate, authorizeAdmin } = require('../middlewares/authMiddleware');
+const { authenticate } = require('../middlewares/authMiddleware');
 
-// User dashboard activity (authenticated users)
+// User dashboard routes (authenticated users)
+router.get('/user/courses', authenticate, dashboardController.getUserCourses);
 router.get('/user/activity', authenticate, dashboardController.getUserActivity);
-
-// Dashboard stats (admin only)
-router.get('/stats', authenticate, authorizeAdmin, dashboardController.getStats);
-
-// Recent system activity (admin only)
-router.get('/activity', authenticate, authorizeAdmin, dashboardController.getActivity);
 
 module.exports = router;

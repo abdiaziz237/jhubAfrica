@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const path = require("path");
 const User = require(path.join(__dirname, "../models/user"));
+
 const {
   generateVerificationToken,
   generatePasswordResetToken,
@@ -16,7 +17,7 @@ module.exports = {
    * @access  Public
    */
   async register(req, res) {
-    console.log('REGISTER BODY:', req.body);
+    // console.log('REGISTER BODY:', req.body);
     try {
       const { name, email, password, passwordConfirm, referralCode, role } = req.body;
 
@@ -37,16 +38,17 @@ module.exports = {
 
       // Handle referral
       let referredBy = null;
+      let referrerId = null;
       if (referralCode) {
         const referrer = await User.findOne({ referralCode });
         if (referrer) {
           referredBy = referrer._id;
-          referrer.points += 100;
-          await referrer.save();
+          referrerId = referrer._id;
         }
       }
 
-      const user = new User({
+      // Create user but don't save to database yet - store in memory for verification
+      const userData = {
         name,
         email,
         password,
@@ -56,10 +58,19 @@ module.exports = {
         emailVerificationToken,
         emailVerified: false,
         status: 'pending',
-        verificationStatus: 'pending'
-      });
+        verificationStatus: 'pending', // Will be approved after email verification
+        points: 0, // Start with 0 points
+        enrolledCourses: 0,
+        completedCourses: 0
+      };
 
+      // Store user data temporarily (in a real app, you might use Redis or a temporary collection)
+      // For now, we'll create the user but mark them as unverified
+      const user = new User(userData);
       await user.save();
+
+      // NOTE: No points are awarded until email verification is complete
+      console.log(`📝 User created but not verified: ${user.email} (ID: ${user._id})`);
 
       // Send verification email
       await sendVerificationEmail(email, emailVerificationToken);
@@ -113,27 +124,35 @@ module.exports = {
       // Use schema static method
       const user = await User.findByCredentials(email, password);
 
-      // Check if user account is verified by admin
-      if (user.verificationStatus === 'pending') {
-        return res.status(403).json({
-          success: false,
-          message: "Your account is pending verification by an administrator. Please wait for approval.",
-        });
-      }
-
-      if (user.verificationStatus === 'rejected') {
-        return res.status(403).json({
-          success: false,
-          message: "Your account verification was rejected. Please contact support for assistance.",
-        });
-      }
-
+      // Check if user email is verified (this is the main requirement)
       if (!user.emailVerified) {
         return res.status(403).json({
           success: false,
-          message: "Please verify your email first",
+          message: "Please verify your email first. Check your inbox for the verification link from jhubafrica.",
         });
       }
+
+      // For basic users (students/instructors), email verification is sufficient
+      if (user.role === 'student' || user.role === 'instructor') {
+        // Allow login if email is verified
+        const token = await user.generateAuthToken();
+
+        res.json({
+          success: true,
+          message: "Login successful",
+          token,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+        });
+        return;
+      }
+
+      // ALL users (including admins) can login with just email verification
+      // No verification status checks needed for any user type
 
       const token = await user.generateAuthToken();
 
@@ -168,29 +187,7 @@ module.exports = {
       // Use schema static method
       const user = await User.findByCredentials(email, password);
 
-      // Check if user account is verified by admin
-      if (user.verificationStatus === 'pending') {
-        return res.status(403).json({
-          success: false,
-          message: "Your account is pending verification by an administrator. Please wait for approval.",
-        });
-      }
-
-      if (user.verificationStatus === 'rejected') {
-        return res.status(403).json({
-          success: false,
-          message: "Your account verification was rejected. Please contact support for assistance.",
-        });
-      }
-
-      if (!user.emailVerified) {
-        return res.status(403).json({
-          success: false,
-          message: "Please verify your email first",
-        });
-      }
-
-      // Check if user is admin
+      // ONLY check if user is admin - no other verification required
       if (user.role !== 'admin') {
         return res.status(403).json({
           success: false,
@@ -220,13 +217,21 @@ module.exports = {
   },
 
   /**
-   * @desc    Verify email
+   * @desc    Verify email with token
    * @route   GET /api/v1/auth/verify-email
    * @access  Public
    */
   async verifyEmail(req, res) {
     try {
       const { token } = req.query;
+
+      // Check if token is provided
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: "Verification token is required",
+        });
+      }
 
       const user = await User.findOne({ emailVerificationToken: token });
       if (!user) {
@@ -236,9 +241,36 @@ module.exports = {
         });
       }
 
+      // Activate user account
       user.emailVerified = true;
       user.emailVerificationToken = undefined;
+      user.status = 'active';
+      user.verificationStatus = 'approved';
       await user.save();
+
+      console.log(`✅ User account activated: ${user.email} (ID: ${user._id})`);
+
+      // Award points for email verification
+      try {
+        const PointsService = require('../services/pointsService');
+        await PointsService.awardPoints(user._id, 'email_verification', 25, 'Email verified successfully');
+        console.log(`✅ Email verification points awarded to user ${user._id}`);
+      } catch (error) {
+        console.error('❌ Error awarding email verification points:', error);
+        // Don't fail verification if points fail
+      }
+
+      // Award referral points if applicable (only after email verification)
+      if (user.referredBy) {
+        try {
+          const PointsService = require('../services/pointsService');
+          await PointsService.awardReferralPoints(user.referredBy, user._id);
+          console.log(`✅ Referral points awarded after verification: ${user.referredBy} -> ${user._id}`);
+        } catch (error) {
+          console.error('❌ Error awarding referral points after verification:', error);
+          // Don't fail verification if referral points fail
+        }
+      }
 
       res.json({ success: true, message: "Email verified successfully" });
     } catch (err) {
@@ -295,11 +327,11 @@ module.exports = {
    */
   async getMe(req, res) {
     try {
-      console.log('🔍 getMe called with req.user:', req.user);
+      // console.log('🔍 getMe called with req.user:', req.user);
       
       // Check if user exists and has required fields
       if (!req.user || !req.user._id) {
-        console.log('🔍 No user found in request');
+        // console.log('🔍 No user found in request');
         return res.status(401).json({ 
           success: false, 
           message: "User not authenticated"
@@ -320,11 +352,50 @@ module.exports = {
         updatedAt: req.user.updatedAt || new Date()
       };
       
-      console.log('🔍 Returning user data:', userData);
+      // console.log('🔍 Returning user data:', userData);
+      
+      // TEMPORARY: Also get courses for dashboard fix
+      let coursesData = [];
+      try {
+        const Enrollment = require('../models/Enrollment');
+        
+        // Get enrolled courses
+        const enrollments = await Enrollment.find({
+          student: req.user._id
+        }).populate({
+          path: 'course',
+          select: 'title description category image points duration status'
+        });
+        
+        coursesData = enrollments
+          .filter(enrollment => enrollment.course && enrollment.course._id)
+          .map(enrollment => ({
+            ...enrollment.course.toObject(),
+            enrollmentId: enrollment._id,
+            enrollmentStatus: enrollment.status,
+            progress: enrollment.progress || 0,
+            enrollmentDate: enrollment.enrollmentDate,
+            lastAccessed: enrollment.lastAccessed,
+            approvedOnly: false
+          }));
+
+        console.log('🔍 getMe: User ID:', req.user._id);
+        console.log('🔍 getMe: User email:', req.user.email);
+        console.log('🔍 getMe: Found', enrollments.length, 'enrollments for courses');
+        console.log('🔍 getMe: Enrollment details:', enrollments.map(e => ({
+          id: e._id,
+          student: e.student,
+          course: e.course ? e.course.title : 'NO COURSE',
+          status: e.status
+        })));
+      } catch (courseErr) {
+        console.error('Error fetching courses in getMe:', courseErr);
+      }
       
       res.json({ 
         success: true, 
-        user: userData
+        user: userData,
+        courses: coursesData  // Add courses to response
       });
       
     } catch (err) {
@@ -333,6 +404,31 @@ module.exports = {
         success: false, 
         message: "Failed to fetch user data",
         error: err.message
+      });
+    }
+  },
+
+  /**
+   * @desc    Get user's referral count
+   * @route   GET /api/v1/auth/referral-count
+   * @access  Private
+   */
+  async getReferralCount(req, res) {
+    try {
+      const userId = req.user._id;
+      
+      // Count users who were referred by this user
+      const referralCount = await User.countDocuments({ referredBy: userId });
+      
+      res.json({
+        success: true,
+        count: referralCount
+      });
+    } catch (err) {
+      console.error("Get Referral Count Error:", err);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to fetch referral count" 
       });
     }
   },
@@ -348,9 +444,21 @@ module.exports = {
 
       const user = await User.findByIdAndUpdate(
         req.user._id,
-        { name, phone },
+        { name, phone, profileComplete: true },
         { new: true, runValidators: true }
       ).select("-password -emailVerificationToken");
+
+      // Award points for profile completion if this is the first time
+      if (!user.profileComplete) {
+        try {
+          const PointsService = require('../services/pointsService');
+          await PointsService.awardPoints(user._id, 'profile_completion', 25, 'Profile completed successfully');
+          console.log(`✅ Profile completion points awarded to user ${user._id}`);
+        } catch (error) {
+          console.error('❌ Error awarding profile completion points:', error);
+          // Don't fail profile update if points fail
+        }
+      }
 
       res.json({
         success: true,
@@ -500,4 +608,63 @@ module.exports = {
         .json({ success: false, message: "Failed to reset password" });
     }
   },
+
+  /**
+   * @desc    Get user's enrolled courses
+   * @route   GET /api/v1/auth/courses
+   * @access  Private
+   */
+  async getUserCourses(req, res) {
+    try {
+      const userId = req.user._id;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
+      
+      console.log('🔍 Auth: Getting courses for user:', userId, req.user.email);
+      
+      const Enrollment = require('../models/Enrollment');
+      
+      // Get enrolled courses
+      const enrollments = await Enrollment.find({
+        student: userId
+      }).populate({
+        path: 'course',
+        select: 'title description category image points duration status'
+      });
+      
+      console.log('🔍 Auth: Found enrollments:', enrollments.length);
+      
+      const enrolledCourses = enrollments
+        .filter(enrollment => enrollment.course && enrollment.course._id)
+        .map(enrollment => ({
+          ...enrollment.course.toObject(),
+          enrollmentId: enrollment._id,
+          enrollmentStatus: enrollment.status,
+          progress: enrollment.progress || 0,
+          enrollmentDate: enrollment.enrollmentDate,
+          lastAccessed: enrollment.lastAccessed,
+          approvedOnly: false
+        }));
+
+      console.log('🔍 Auth: Returning courses:', enrolledCourses.length);
+      console.log('🔍 Auth: Course titles:', enrolledCourses.map(c => c.title));
+      
+      res.json({
+        success: true,
+        data: enrolledCourses || []
+      });
+    } catch (err) {
+      console.error('Error in getUserCourses:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching user courses',
+        error: err.message
+      });
+    }
+  }
 };

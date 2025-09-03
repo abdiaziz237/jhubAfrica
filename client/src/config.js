@@ -1,6 +1,9 @@
+const rawApiBase = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const ensuredApiBase = rawApiBase.endsWith('/api') ? rawApiBase : `${rawApiBase}/api`;
+
 const config = {
   // API Configuration
-  API_BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
+  API_BASE_URL: ensuredApiBase,
   
   // App Configuration
   APP_NAME: 'JHUB Africa',

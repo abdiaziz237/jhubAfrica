@@ -1,5 +1,6 @@
 const Course = require('../models/Course');
 const CourseInterest = require('../models/CourseInterest');
+const User = require('../models/user');
 const { logSecurityEvent } = require('../utils/securityLogger');
 const { sendCourseInterestConfirmation } = require('../services/emailService');
 const mongoose = require('mongoose');
@@ -12,12 +13,12 @@ module.exports = {
    */
   async getAllCourses(req, res) {
     try {
-      console.log('Public: Fetching active courses...');
+      // console.log('Public: Fetching active courses...');
       
       const courses = await Course.find({ status: 'active' })
         .sort({ createdAt: -1 });
 
-      console.log(`Public: Found ${courses.length} active courses:`, courses.map(c => ({ id: c._id, title: c.title, status: c.status })));
+      // console.log(`Public: Found ${courses.length} active courses:`, courses.map(c => ({ id: c._id, title: c.title, status: c.status })));
 
       res.json({
         success: true,
@@ -40,6 +41,15 @@ module.exports = {
    */
   async getCourse(req, res) {
     try {
+      console.log('🎯 Getting course with ID:', req.params.id);
+      
+      if (!req.params.id || req.params.id === 'undefined') {
+        return res.status(400).json({
+          success: false,
+          message: 'Course ID is required'
+        });
+      }
+      
       const course = await Course.findById(req.params.id);
 
       if (!course) {
@@ -221,6 +231,16 @@ module.exports = {
    */
   async enrollInCourse(req, res) {
     try {
+      console.log('🎯 Enrolling user in course with ID:', req.params.id);
+      console.log('🎯 User ID:', req.user._id);
+      
+      if (!req.params.id || req.params.id === 'undefined') {
+        return res.status(400).json({
+          success: false,
+          message: 'Course ID is required'
+        });
+      }
+      
       const course = await Course.findById(req.params.id);
       const Enrollment = require('../models/Enrollment');
 
@@ -241,7 +261,7 @@ module.exports = {
 
       // Check if already enrolled
       const existingEnrollment = await Enrollment.findOne({
-        student: req.user.id,
+        student: req.user._id,
         course: course._id
       });
 
@@ -267,7 +287,7 @@ module.exports = {
 
       // Create new enrollment
       const enrollment = new Enrollment({
-        student: req.user.id,
+        student: req.user._id,
         course: course._id,
         status: 'active',
         progress: 0
@@ -275,16 +295,22 @@ module.exports = {
 
       await enrollment.save();
 
-      // Award points to user
-      const user = await User.findById(req.user.id);
-      user.points += course.points;
-      await user.save();
+      // Award points using the points service
+      const PointsService = require('../services/pointsService');
+      const pointsResult = await PointsService.awardPoints(
+        req.user._id, 
+        'enrollment', 
+        100, 
+        `Enrolled in ${course.title}`
+      );
+      
+      console.log(`✅ Points awarded for enrollment in ${course.title}: ${pointsResult.newTotal} total points`);
 
       logSecurityEvent('COURSE_ENROLLED', {
-        userId: req.user.id,
+        userId: req.user._id,
         courseId: course._id,
         courseTitle: course.title,
-        pointsEarned: course.points
+        pointsEarned: 100
       });
 
       res.json({
@@ -293,8 +319,8 @@ module.exports = {
         data: {
           courseId: course._id,
           enrollmentId: enrollment._id,
-          pointsEarned: course.points,
-          totalPoints: user.points
+          pointsEarned: 100,
+          totalPoints: pointsResult.newTotal
         }
       });
     } catch (error) {
@@ -325,7 +351,7 @@ module.exports = {
 
       // Find and remove enrollment
       const enrollment = await Enrollment.findOneAndDelete({
-        student: req.user.id,
+        student: req.user._id,
         course: course._id
       });
 
@@ -336,16 +362,26 @@ module.exports = {
         });
       }
 
-      // Deduct points from user
-      const user = await User.findById(req.user.id);
-      user.points = Math.max(0, user.points - course.points);
-      await user.save();
+      // Deduct points from user's total (deduct 100 points for unenrollment)
+      const User = require('../models/user');
+      console.log(`🎯 Updating points for user ${req.user._id} - deducting 100 points for course unenrollment`);
+      
+      const updatedUser = await User.findByIdAndUpdate(req.user._id, {
+        $inc: { points: -100 }
+      }, { new: true });
+
+      if (!updatedUser) {
+        console.error('❌ Failed to update user points - user not found');
+        throw new Error('Failed to update user points');
+      }
+
+      console.log(`✅ User points updated successfully: ${updatedUser.points} total points`);
 
       logSecurityEvent('COURSE_UNENROLLED', {
-        userId: req.user.id,
+        userId: req.user._id,
         courseId: course._id,
         courseTitle: course.title,
-        pointsDeducted: course.points
+        pointsDeducted: 100
       });
 
       res.json({
@@ -353,8 +389,8 @@ module.exports = {
         message: 'Successfully unenrolled from course',
         data: {
           courseId: course._id,
-          pointsDeducted: course.points,
-          totalPoints: user.points
+          pointsDeducted: 100,
+          totalPoints: updatedUser.points
         }
       });
     } catch (error) {
@@ -375,25 +411,47 @@ module.exports = {
     try {
       const Enrollment = require('../models/Enrollment');
       
-      const enrollments = await Enrollment.find({
-        student: req.user.id,
-        status: { $in: ['active', 'completed'] }
-      }).populate({
-        path: 'course',
-        select: 'title description category image points duration status'
-      });
+      const userId = (req.user && (req.user._id || req.user.id)) || req.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
+      
+      let enrollments = [];
+      try {
+        enrollments = await Enrollment.find({
+          student: userId,
+          status: { $in: ['active', 'completed'] }
+        }).populate({
+          path: 'course',
+          select: 'title description category image points duration durationInHours status'
+        });
+      } catch (enrollmentError) {
+        console.error('Error fetching enrollments:', enrollmentError);
+        enrollments = [];
+      }
 
-      const enrolledCourses = enrollments.map(enrollment => ({
-        ...enrollment.course.toObject(),
-        enrollmentId: enrollment._id,
-        progress: enrollment.progress,
-        enrollmentDate: enrollment.enrollmentDate,
-        lastAccessed: enrollment.lastAccessed
-      }));
+      const enrolledCourses = enrollments
+        .filter(enrollment => enrollment.course && enrollment.course._id)
+        .map(enrollment => ({
+          ...enrollment.course.toObject(),
+          enrollmentId: enrollment._id,
+          enrollmentStatus: enrollment.status,
+          progress: enrollment.progress || 0,
+          enrollmentDate: enrollment.enrollmentDate,
+          lastAccessed: enrollment.lastAccessed,
+          approvedOnly: false
+        }));
+
+      // Return only enrolled courses (approved interests are fetched separately)
+      const myCourses = enrolledCourses;
 
       res.json({
         success: true,
-        data: enrolledCourses
+        data: myCourses || []
       });
     } catch (error) {
       console.error('Get Enrolled Courses Error:', error);
@@ -485,12 +543,12 @@ module.exports = {
    * @access  Public
    */
   async submitCourseInterest(req, res) {
-    console.log('=== COURSE INTEREST SUBMISSION START ===');
+    // console.log('=== COURSE INTEREST SUBMISSION START ===');
     
     try {
       // Log the request
-      console.log('Request body:', JSON.stringify(req.body, null, 2));
-      console.log('Request headers:', req.headers);
+      // console.log('Request body:', JSON.stringify(req.body, null, 2));
+      // console.log('Request headers:', req.headers);
       
       // Extract and validate required fields
       const {
@@ -505,7 +563,7 @@ module.exports = {
         preferredStartDate
       } = req.body;
 
-      console.log('Extracted data:', {
+      /* console.log('Extracted data:', {
         courseId,
         courseTitle,
         fullName,
@@ -515,14 +573,14 @@ module.exports = {
         experience,
         motivation,
         preferredStartDate
-      });
+      }); */
 
       // Validate required fields
       const requiredFields = ['courseId', 'courseTitle', 'fullName', 'email', 'motivation'];
       const missingFields = requiredFields.filter(field => !req.body[field] || req.body[field].trim() === '');
       
       if (missingFields.length > 0) {
-        console.log('Missing required fields:', missingFields);
+        // console.log('Missing required fields:', missingFields);
         return res.status(400).json({
           success: false,
           message: `Missing required fields: ${missingFields.join(', ')}`
@@ -532,7 +590,7 @@ module.exports = {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        console.log('Invalid email format:', email);
+        // console.log('Invalid email format:', email);
         return res.status(400).json({
           success: false,
           message: 'Please provide a valid email address'
@@ -541,49 +599,49 @@ module.exports = {
 
       // Validate courseId format (MongoDB ObjectId)
       if (!mongoose.Types.ObjectId.isValid(courseId)) {
-        console.log('Invalid courseId format:', courseId);
+        // console.log('Invalid courseId format:', courseId);
         return res.status(400).json({
           success: false,
           message: 'Invalid course ID format'
         });
       }
 
-      console.log('Basic validation passed');
+      // console.log('Basic validation passed');
 
       // Check if course exists
-      console.log('Finding course with ID:', courseId);
+      // console.log('Finding course with ID:', courseId);
       const course = await Course.findById(courseId);
       if (!course) {
-        console.log('Course not found:', courseId);
+        // console.log('Course not found:', courseId);
         return res.status(404).json({
           success: false,
           message: 'Course not found'
         });
       }
-      console.log('Course found:', course.title);
+      // console.log('Course found:', course.title);
 
       // Check if user already submitted interest for this course
-      console.log('Checking for duplicate interest...');
+      // console.log('Checking for duplicate interest...');
       const existingInterest = await CourseInterest.findOne({
         courseId,
         email
       });
 
       if (existingInterest) {
-        console.log('Duplicate interest found for:', email, 'in course:', courseId);
+        // console.log('Duplicate interest found for:', email, 'in course:', courseId);
         return res.status(400).json({
           success: false,
           message: 'You have already expressed interest in this course'
         });
       }
-      console.log('No duplicate interest found');
+      // console.log('No duplicate interest found');
 
-      console.log('Creating new course interest...');
+      // console.log('Creating new course interest...');
 
       // Debug: Check CourseInterest model
-      console.log('CourseInterest model type:', typeof CourseInterest);
-      console.log('CourseInterest schema fields:', Object.keys(CourseInterest.schema.paths));
-      console.log('preferredStartDate field type:', CourseInterest.schema.paths.preferredStartDate?.instance);
+      // console.log('CourseInterest model type:', typeof CourseInterest);
+      // console.log('CourseInterest schema fields:', Object.keys(CourseInterest.schema.paths));
+      // console.log('preferredStartDate field type:', CourseInterest.schema.paths.preferredStartDate?.instance);
 
       // Prepare course interest data with defaults
       const courseInterestData = {
@@ -599,27 +657,27 @@ module.exports = {
         preferredStartDate: preferredStartDate && preferredStartDate.trim() !== '' ? preferredStartDate.trim() : undefined
       };
 
-      console.log('Prepared course interest data:', courseInterestData);
+      // console.log('Prepared course interest data:', courseInterestData);
 
       // Create new course interest
-      console.log('Creating CourseInterest model...');
+      // console.log('Creating CourseInterest model...');
       const courseInterest = new CourseInterest(courseInterestData);
-      console.log('Course interest model created successfully');
+      // console.log('Course interest model created successfully');
 
       // Save to database
-      console.log('Attempting to save course interest...');
+      // console.log('Attempting to save course interest...');
       await courseInterest.save();
-      console.log('Course interest saved successfully with ID:', courseInterest._id);
+      // console.log('Course interest saved successfully with ID:', courseInterest._id);
 
       // Send confirmation email (non-blocking)
       try {
         // Check if email service is properly configured
         if (process.env.EMAIL_USER && process.env.BASE_URL) {
-          console.log('Attempting to send confirmation email to:', email);
+          // console.log('Attempting to send confirmation email to:', email);
           await sendCourseInterestConfirmation(email, fullName, courseTitle);
-          console.log('Confirmation email sent successfully');
+          // console.log('Confirmation email sent successfully');
         } else {
-          console.log('Email service not configured, skipping email send');
+          // console.log('Email service not configured, skipping email send');
         }
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError);
@@ -643,16 +701,16 @@ module.exports = {
             email,
             fullName
           });
-          console.log('Security event logged successfully');
+          // console.log('Security event logged successfully');
         } else {
-          console.log('Security logger not configured, skipping security event');
+          // console.log('Security logger not configured, skipping security event');
         }
       } catch (securityLogError) {
         console.error('Failed to log security event:', securityLogError);
         // Don't fail the request if security logging fails
       }
 
-      console.log('Course interest submission completed successfully');
+      // console.log('Course interest submission completed successfully');
 
       // Return success response
       res.status(201).json({
@@ -718,33 +776,35 @@ module.exports = {
    */
   async getApprovedCourseInterests(req, res) {
     try {
-      console.log('Getting approved course interests for user:', req.userId);
+      const userEmail = req.user.email;
+      console.log('🎯 Getting approved course interests for user:', userEmail);
       
       // Find approved course interests for the authenticated user
       const approvedInterests = await CourseInterest.find({
-        email: req.user.email,
+        email: userEmail,
         status: 'approved'
       }).populate('courseId', 'title description category image price');
 
-      console.log(`Found ${approvedInterests.length} approved interests`);
+      console.log('🎯 Found approved interests:', approvedInterests.length);
+      if (approvedInterests.length > 0) {
+        console.log('🎯 First approved interest:', {
+          courseTitle: approvedInterests[0].courseTitle,
+          status: approvedInterests[0].status,
+          email: approvedInterests[0].email
+        });
+      }
 
-      // Transform the data to include course information
-      const transformedInterests = approvedInterests.map(interest => ({
-        _id: interest._id,
-        courseId: interest.courseId._id,
-        courseTitle: interest.courseTitle,
-        courseImage: interest.courseId?.image,
-        courseDescription: interest.courseId?.description,
-        courseCategory: interest.courseId?.category,
-        coursePrice: interest.courseId?.price,
-        fullName: interest.fullName,
-        email: interest.email,
-        status: interest.status,
-        adminNotes: interest.adminNotes,
-        adminResponse: interest.adminResponse,
-        responseDate: interest.responseDate,
-        submittedAt: interest.createdAt,
-        updatedAt: interest.updatedAt
+      // Transform the data to course format for dashboard display
+      const transformedInterests = approvedInterests
+        .filter(interest => interest.courseId && interest.courseId._id)
+        .map(interest => ({
+          ...interest.courseId.toObject(),
+          enrollmentId: null,
+          progress: 0,
+          enrollmentDate: interest.responseDate || interest.updatedAt || interest.createdAt,
+          lastAccessed: interest.updatedAt || interest.createdAt,
+          approvedOnly: true,
+          approvedInterestId: interest._id
       }));
 
       res.json({
@@ -790,7 +850,7 @@ module.exports = {
       // Check if already enrolled
       const Enrollment = require('../models/Enrollment');
       const existingEnrollment = await Enrollment.findOne({
-        student: req.user.id,
+        student: req.user._id,
         course: course._id
       });
 
@@ -803,7 +863,7 @@ module.exports = {
 
       // Check if already on waitlist
       const existingWaitlist = await Waitlist.findOne({
-        user: req.user.id,
+        user: req.user._id,
         course: course._id,
         status: { $in: ['waiting', 'notified'] }
       });
@@ -817,7 +877,7 @@ module.exports = {
 
       // Create waitlist entry
       const waitlistEntry = new Waitlist({
-        user: req.user.id,
+        user: req.user._id,
         course: course._id,
         status: 'waiting'
       });
@@ -832,7 +892,7 @@ module.exports = {
       });
 
       logSecurityEvent('WAITLIST_JOINED', {
-        userId: req.user.id,
+        userId: req.user._id,
         courseId: course._id,
         courseTitle: course.title,
         position: position + 1
@@ -876,7 +936,7 @@ module.exports = {
 
       // Find and remove waitlist entry
       const waitlistEntry = await Waitlist.findOneAndDelete({
-        user: req.user.id,
+        user: req.user._id,
         course: course._id,
         status: { $in: ['waiting', 'notified'] }
       });
@@ -889,7 +949,7 @@ module.exports = {
       }
 
       logSecurityEvent('WAITLIST_LEFT', {
-        userId: req.user.id,
+        userId: req.user._id,
         courseId: course._id,
         courseTitle: course.title
       });
@@ -930,7 +990,7 @@ module.exports = {
 
       // Check if user is on waitlist
       const waitlistEntry = await Waitlist.findOne({
-        user: req.user.id,
+        user: req.user._id,
         course: course._id,
         status: { $in: ['waiting', 'notified'] }
       });
@@ -983,11 +1043,11 @@ module.exports = {
       const Waitlist = require('../models/Waitlist');
       
       const waitlistEntries = await Waitlist.find({
-        user: req.user.id,
+        user: req.user._id,
         status: { $in: ['waiting', 'notified'] }
       }).populate({
         path: 'course',
-        select: 'title description category image points duration status cohortStatus'
+        select: 'title description category image points duration durationInHours status cohortStatus'
       });
 
       const waitlistedCourses = waitlistEntries.map(entry => ({
@@ -1007,6 +1067,209 @@ module.exports = {
       res.status(500).json({
         success: false,
         message: 'Failed to fetch waitlisted courses'
+      });
+    }
+  },
+
+  /**
+   * @route   GET /api/v1/courses/interests/approved
+   * @desc    Get user's approved course interests
+   * @access  Private
+   */
+  async getApprovedInterests(req, res) {
+    try {
+      const userId = req.user._id;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
+      
+      const CourseInterest = require('../models/CourseInterest');
+      
+      // Get approved course interests for the user
+      const approvedInterests = await CourseInterest.find({
+        email: req.user.email,
+        status: 'approved'
+      }).populate('courseId', 'title description category image points duration status');
+      
+      const approvedCourses = approvedInterests
+        .filter(interest => interest.courseId && interest.courseId._id)
+        .map(interest => ({
+          ...interest.courseId.toObject(),
+          enrollmentId: null,
+          progress: 0,
+          enrollmentDate: interest.responseDate || interest.updatedAt || interest.createdAt,
+          lastAccessed: interest.updatedAt || interest.createdAt,
+          approvedOnly: true,
+          approvedInterestId: interest._id
+        }));
+      
+      res.json({
+        success: true,
+        data: approvedCourses || []
+      });
+    } catch (err) {
+      console.error('Error in getApprovedInterests:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching approved interests',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * @desc    Enroll in approved course
+   * @route   POST /api/v1/courses/interest/:interestId/enroll
+   * @access  Private
+   */
+  async enrollInApprovedCourse(req, res) {
+    try {
+      const { interestId } = req.params;
+      const userId = req.user._id;
+      
+      console.log('🎯 Enrolling in approved course for interest:', interestId);
+      console.log('🎯 User ID:', userId);
+      
+      if (!interestId || interestId === 'undefined') {
+        return res.status(400).json({
+          success: false,
+          message: 'Interest ID is required'
+        });
+      }
+
+      const CourseInterest = require('../models/CourseInterest');
+      const Enrollment = require('../models/Enrollment');
+      const Course = require('../models/Course');
+      const User = require('../models/user');
+
+      // Find the approved course interest
+      const courseInterest = await CourseInterest.findById(interestId)
+        .populate('courseId', 'title description category image points duration status maxStudents');
+
+      if (!courseInterest) {
+        return res.status(404).json({
+          success: false,
+          message: 'Course interest not found'
+        });
+      }
+
+      // Verify the interest belongs to the current user
+      if (courseInterest.email !== req.user.email) {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only enroll in your own approved course interests'
+        });
+      }
+
+      // Verify the interest is approved
+      if (courseInterest.status !== 'approved') {
+        return res.status(400).json({
+          success: false,
+          message: 'Course interest is not approved yet'
+        });
+      }
+
+      const course = courseInterest.courseId;
+      if (!course) {
+        return res.status(404).json({
+          success: false,
+          message: 'Course not found'
+        });
+      }
+
+      // Check if course is active
+      if (course.status !== 'active') {
+        return res.status(400).json({
+          success: false,
+          message: 'Course is not available for enrollment'
+        });
+      }
+
+      // Check if already enrolled
+      const existingEnrollment = await Enrollment.findOne({
+        student: userId,
+        course: course._id
+      });
+
+      if (existingEnrollment) {
+        return res.status(400).json({
+          success: false,
+          message: 'Already enrolled in this course'
+        });
+      }
+
+      // Check if course is full
+      const enrollmentCount = await Enrollment.countDocuments({
+        course: course._id,
+        status: { $in: ['active', 'completed'] }
+      });
+
+      if (enrollmentCount >= course.maxStudents) {
+        return res.status(409).json({
+          success: false,
+          message: 'Course is full'
+        });
+      }
+
+      // Create new enrollment
+      const enrollment = new Enrollment({
+        student: userId,
+        course: course._id,
+        status: 'active',
+        progress: 0
+      });
+
+      await enrollment.save();
+
+      // Award points using the points service
+      const PointsService = require('../services/pointsService');
+   
+     const pointsResult = await PointsService.awardPoints(
+        userId, 
+        'enrollment', 
+        100, 
+        `Enrolled in ${course.title}`
+      );
+      
+      console.log(`✅ Points awarded for enrollment in ${course.title}`);
+
+      // Update the course interest status to 'enrolled'
+      courseInterest.status = 'enrolled';
+      courseInterest.enrollmentDate = new Date();
+      await courseInterest.save();
+
+      // Log security event
+      const { logSecurityEvent } = require('../utils/securityLogger');
+      logSecurityEvent('COURSE_ENROLLED_FROM_APPROVAL', {
+        userId: userId,
+        courseId: course._id,
+        courseTitle: course.title,
+        interestId: interestId,
+        pointsEarned: 100
+      });
+
+      res.json({
+        success: true,
+        message: 'Successfully enrolled in approved course',
+        data: {
+          courseId: course._id,
+          courseTitle: course.title,
+          enrollmentId: enrollment._id,
+          pointsEarned: 100,
+          totalPoints: pointsResult.newTotal
+        }
+      });
+
+    } catch (error) {
+      console.error('Error enrolling in approved course:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error enrolling in approved course',
+        error: error.message
       });
     }
   }

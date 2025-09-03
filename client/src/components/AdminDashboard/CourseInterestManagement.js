@@ -673,7 +673,7 @@ const CourseInterestManagement = () => {
       <div className="course-interest-management">
         <style>{customStyles}</style>
         <div className="page-header">
-          <h1>📋 Course Interest Management</h1>
+          <h1><i className="fas fa-clipboard-list"></i> Course Interest Management</h1>
           <p>Manage and review course interest submissions from potential students</p>
         </div>
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
@@ -690,15 +690,15 @@ const CourseInterestManagement = () => {
       
       <div className="page-header">
         <div className="header-content">
-          <h1>📋 Course Interest Management</h1>
-          <p>Manage and review course interest submissions from potential students</p>
+          <h1><i className="fas fa-clipboard-list"></i> Course Interest Management</h1>
+        <p>Manage and review course interest submissions from potential students</p>
         </div>
         <div className="header-actions">
           <button 
             className="admin-btn secondary" 
             onClick={() => window.location.href = '/admin/dashboard'}
           >
-            ← Back to Dashboard
+            <i className="fas fa-arrow-left"></i> Back to Dashboard
           </button>
         </div>
       </div>
@@ -706,42 +706,54 @@ const CourseInterestManagement = () => {
       {/* Statistics Cards */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-icon">📊</div>
+          <div className="stat-icon">
+            <i className="fas fa-chart-bar"></i>
+          </div>
           <div className="stat-content">
             <h3>Total Interests</h3>
             <p className="stat-number">{stats.total}</p>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">⏳</div>
+          <div className="stat-icon">
+            <i className="fas fa-clock"></i>
+          </div>
           <div className="stat-content">
             <h3>Pending Review</h3>
             <p className="stat-number">{stats.pending}</p>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">👁️</div>
+          <div className="stat-icon">
+            <i className="fas fa-eye"></i>
+          </div>
           <div className="stat-content">
             <h3>Reviewed</h3>
             <p className="stat-number">{stats.reviewed}</p>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon">
+            <i className="fas fa-check-circle"></i>
+          </div>
           <div className="stat-content">
             <h3>Approved</h3>
             <p className="stat-number">{stats.approved}</p>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">❌</div>
+          <div className="stat-icon">
+            <i className="fas fa-times-circle"></i>
+          </div>
           <div className="stat-content">
             <h3>Rejected</h3>
             <p className="stat-number">{stats.rejected}</p>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">📞</div>
+          <div className="stat-icon">
+            <i className="fas fa-phone"></i>
+          </div>
           <div className="stat-content">
             <h3>Contacted</h3>
             <p className="stat-number">{stats.contacted}</p>

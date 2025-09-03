@@ -48,6 +48,10 @@ const courseSchema = new mongoose.Schema({
     type: String,
     default: '8-12 weeks'
   },
+  durationInHours: {
+    type: Number,
+    default: 40 // Default to 40 hours for learning time calculation
+  },
   prerequisites: {
     type: String,
     default: 'None'

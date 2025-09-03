@@ -52,7 +52,9 @@ module.exports = (app) => {
       if (routeName === 'referralRoutes') basePath = '/api/v1/referrals';
 
       app.use(basePath, route);
-      console.log(`Route ${basePath} loaded`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Route ${basePath} loaded`);
+      }
     }
   });
 };

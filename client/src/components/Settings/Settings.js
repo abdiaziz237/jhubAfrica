@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Settings.css";
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
+import config from "../../config";
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -38,7 +37,7 @@ export default function Settings() {
       return;
     }
 
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        const response = await fetch(`${config.API_BASE_URL}/v1/auth/me`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -92,7 +91,7 @@ export default function Settings() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/update-profile`, {
+      const response = await fetch(`${config.API_BASE_URL}/v1/auth/update-profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -3,6 +3,7 @@ const User = require('../models/user');
 const Course = require('../models/Course');
 const CourseInterest = require('../models/CourseInterest');
 const { sendCourseInterestStatusUpdate } = require('../services/emailService');
+const { logSecurityEvent } = require('../utils/securityLogger');
 
 module.exports = {
   // @route   GET /api/v1/admin/users
@@ -10,15 +11,23 @@ module.exports = {
   // @access  Admin only
   async listUsers(req, res) {
     try {
+      console.log('🔍 Admin: Listing all users');
+      console.log('🔍 Admin: User making request:', req.user._id);
+      
       const users = await User.find({})
         .select('-password -tokens');
       
+      console.log('🔍 Admin: Found users:', users.length);
+      users.forEach(user => {
+        console.log(`   - ${user._id}: ${user.email} (${user.role})`);
+      });
+
       res.json({
         success: true,
         data: users
       });
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('🔍 Admin: Error listing users:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -31,7 +40,7 @@ module.exports = {
   // @access  Admin only
   async createUser(req, res) {
     try {
-      console.log('Admin createUser called with body:', req.body);
+      // console.log('Admin createUser called with body:', req.body);
       
       // Validate required fields
       if (!req.body.firstName || !req.body.lastName || !req.body.email || !req.body.password) {
@@ -56,7 +65,9 @@ module.exports = {
         email: req.body.email,
         password: req.body.password,
         role: req.body.role && ['admin', 'instructor', 'student'].includes(req.body.role) ? req.body.role : 'student',
+        status: 'active', // Admin-created users are automatically active
         emailVerified: true, // Admin-created users are automatically verified
+        // No verification status needed - users are verified by email only
         profileComplete: true
       };
 
@@ -64,14 +75,14 @@ module.exports = {
       if (req.body.phone) userData.phone = req.body.phone;
       if (req.body.location) userData.location = req.body.location;
 
-      console.log('Prepared user data:', userData);
+      // console.log('Prepared user data:', userData);
 
       // Create user
       const user = new User(userData);
-      console.log('User model instance created, attempting to save...');
+      // console.log('User model instance created, attempting to save...');
       
       await user.save();
-      console.log('User saved successfully with ID:', user._id);
+      // console.log('User saved successfully with ID:', user._id);
 
       // Remove sensitive data before sending response
       const userResponse = user.toObject();
@@ -127,8 +138,13 @@ module.exports = {
   // @access  Admin only
   async getUser(req, res) {
     try {
+      console.log('🔍 Admin: Getting user with ID:', req.params.userId);
+      console.log('🔍 Admin: User making request:', req.user._id);
+      
       const user = await User.findById(req.params.userId)
         .select('-password -tokens');
+
+      console.log('🔍 Admin: Found user:', user ? user._id : 'null');
 
       if (!user) {
         return res.status(404).json({
@@ -142,6 +158,7 @@ module.exports = {
         data: user
       });
     } catch (error) {
+      console.error('🔍 Admin: Error getting user:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -210,17 +227,17 @@ module.exports = {
   // @access  Admin only
   async listCourses(req, res) {
     try {
-      console.log('Admin: Fetching all courses...');
+      // console.log('Admin: Fetching all courses...');
       
       // Fetch ALL courses regardless of status - this should include your 6 courses
       const courses = await Course.find({})
         .sort({ createdAt: -1 });
       
-      console.log(`Admin: Found ${courses.length} courses:`, courses.map(c => ({ id: c._id, title: c.title, status: c.status })));
+      // console.log(`Admin: Found ${courses.length} courses:`, courses.map(c => ({ id: c._id, title: c.title, status: c.status })));
       
       // If no courses found, try to seed some
       if (courses.length === 0) {
-        console.log('No courses found, attempting to seed...');
+        // console.log('No courses found, attempting to seed...');
         // You can run node seedCourses.js manually if needed
       }
       
@@ -242,8 +259,8 @@ module.exports = {
   // @access  Admin only
   async createCourse(req, res) {
     try {
-      console.log('Creating course with data:', req.body);
-      console.log('User ID from token:', req.userId);
+      // console.log('Creating course with data:', req.body);
+      // console.log('User ID from token:', req.userId);
       
       // Remove level field if it exists (not in Course model)
       const { level, ...courseData } = req.body;
@@ -268,12 +285,12 @@ module.exports = {
         createdBy: req.userId
       };
 
-      console.log('Final course data:', finalCourseData);
+      // console.log('Final course data:', finalCourseData);
 
       const course = new Course(finalCourseData);
       await course.save();
 
-      console.log('Course created successfully:', course._id);
+      // console.log('Course created successfully:', course._id);
 
       res.status(201).json({
         success: true,
@@ -939,10 +956,14 @@ module.exports = {
           message: 'Invalid status. Must be one of: pending, reviewed, approved, rejected, contacted'
         });
       }
-
+      const updateData = { status };
+      if (status === 'approved') {
+        updateData.responseDate = new Date();
+      }
+      
       const courseInterest = await CourseInterest.findByIdAndUpdate(
         id,
-        { status },
+        updateData,
         { new: true }
       ).populate('courseId', 'title category');
 
@@ -952,6 +973,8 @@ module.exports = {
           message: 'Course interest not found'
         });
       }
+
+      console.log('✅ Course interest status updated to:', status);
 
       res.json({
         success: true,
@@ -967,142 +990,5 @@ module.exports = {
     }
   },
 
-  /**
-   * @desc    Get users pending verification
-   * @route   GET /api/v1/admin/users/pending-verification
-   * @access  Admin only
-   */
-  async getPendingVerifications(req, res) {
-    try {
-      const pendingUsers = await User.find({
-        verificationStatus: 'pending',
-        role: { $ne: 'admin' }
-      })
-      .select('-password -tokens -securityQuestions')
-      .populate('referredBy', 'name email')
-      .sort({ createdAt: -1 });
-
-      res.json({
-        success: true,
-        data: pendingUsers,
-        count: pendingUsers.length
-      });
-    } catch (error) {
-      console.error('Get Pending Verifications Error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to fetch pending verifications'
-      });
-    }
-  },
-
-  /**
-   * @desc    Verify a user account
-   * @route   PATCH /api/v1/admin/users/:userId/verify
-   * @access  Admin only
-   */
-  async verifyUser(req, res) {
-    try {
-      const { userId } = req.params;
-      const { verificationStatus, verificationNotes } = req.body;
-      const adminId = req.user.id;
-
-      if (!verificationStatus || !['approved', 'rejected'].includes(verificationStatus)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Verification status must be either "approved" or "rejected"'
-        });
-      }
-
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      // Update user verification status
-      user.verificationStatus = verificationStatus;
-      user.verificationDate = new Date();
-      user.verifiedBy = adminId;
-      user.verificationNotes = verificationNotes || '';
-
-      // If approved, also update user status to active
-      if (verificationStatus === 'approved') {
-        user.status = 'active';
-        user.emailVerified = true; // Auto-verify email for admin-approved users
-      }
-
-      await user.save();
-
-      // Log the verification action
-      await logSecurityEvent({
-        event: 'USER_VERIFICATION',
-        userId: adminId,
-        targetUserId: userId,
-        action: verificationStatus === 'approved' ? 'APPROVED_USER' : 'REJECTED_USER',
-        details: {
-          verificationNotes,
-          previousStatus: user.status,
-          newStatus: user.status
-        },
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
-      });
-
-      res.json({
-        success: true,
-        message: `User verification ${verificationStatus} successfully`,
-        data: {
-          userId: user._id,
-          name: user.name,
-          email: user.email,
-          verificationStatus: user.verificationStatus,
-          status: user.status,
-          verificationDate: user.verificationDate
-        }
-      });
-    } catch (error) {
-      console.error('Verify User Error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to verify user'
-      });
-    }
-  },
-
-  /**
-   * @desc    Get user verification details
-   * @route   GET /api/v1/admin/users/:userId/verification
-   * @access  Admin only
-   */
-  async getUserVerificationDetails(req, res) {
-    try {
-      const { userId } = req.params;
-
-      const user = await User.findById(userId)
-        .select('-password -tokens -securityQuestions')
-        .populate('verifiedBy', 'name email')
-        .populate('referredBy', 'name email');
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      res.json({
-        success: true,
-        data: user
-      });
-    } catch (error) {
-      console.error('Get User Verification Details Error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to fetch user verification details'
-      });
-    }
-  }
+  // All verification functions removed - system is purely email-based
 };

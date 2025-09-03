@@ -22,6 +22,7 @@ import WaitlistManagement from "./components/AdminDashboard/WaitlistManagement";
 import UserVerificationManagement from "./components/AdminDashboard/UserVerificationManagement";
 
 import Referrals from "./components/Referrals/Referrals";
+
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import ResetPassword from "./components/ResetPassword/ResetPassword";
 import VerificationStatus from "./components/VerificationStatus/VerificationStatus";
@@ -34,7 +35,7 @@ function Home() {
       <div className="hero-section">
         <div className="hero-content">
           <div className="hero-badge">
-            <span>Premium Learning Platform</span>
+            <span>JHUB Learning Platform</span>
           </div>
           <h1 className="hero-title">
             Transform Your Future with
@@ -143,7 +144,7 @@ function Home() {
           <Link to="/register" className="cta-button primary large">
             <i className="fas fa-arrow-right"></i>
             Start Your Journey Today
-          </Link>
+      </Link>
         </div>
       </div>
     </div>
@@ -181,7 +182,7 @@ function Navbar() {
           </div>
           <div className="brand-text">
             <span className="brand-name">JHUB Africa</span>
-            <span className="brand-tagline">Premium Learning</span>
+            <span className="brand-tagline">Courses</span>
           </div>
         </Link>
         
@@ -193,33 +194,33 @@ function Navbar() {
         
         <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
           <div className="nav-links">
-            <Link to="/" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
+          <Link to="/" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
               <i className="fas fa-home"></i>
               <span>Home</span>
-            </Link>
-            <Link to="/courses" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
+          </Link>
+          <Link to="/courses" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
               <i className="fas fa-graduation-cap"></i>
               <span>Courses</span>
-            </Link>
-            
-            {isLoggedIn ? (
-              <>
-                <Link to="/dashboard" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
+          </Link>
+          
+          {isLoggedIn ? (
+            <>
+              <Link to="/dashboard" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
                   <i className="fas fa-tachometer-alt"></i>
                   <span>Dashboard</span>
-                </Link>
-                <Link to="/profile" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
+              </Link>
+              <Link to="/profile" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
                   <i className="fas fa-user"></i>
                   <span>Profile</span>
-                </Link>
-                <Link to="/settings" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
+              </Link>
+              <Link to="/settings" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
                   <i className="fas fa-cog"></i>
                   <span>Settings</span>
-                </Link>
-                <Link to="/referrals" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
+              </Link>
+              <Link to="/referrals" className="navbar-link" onClick={() => setIsMenuOpen(false)}>
                   <i className="fas fa-share-alt"></i>
                   <span>Referrals</span>
-                </Link>
+              </Link>
               </>
             ) : null}
           </div>
@@ -230,18 +231,18 @@ function Navbar() {
                 <i className="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
               </button>
-            ) : (
-              <>
+          ) : (
+            <>
                 <Link to="/login" className="navbar-link login-btn" onClick={() => setIsMenuOpen(false)}>
                   <i className="fas fa-sign-in-alt"></i>
                   <span>Login</span>
-                </Link>
+              </Link>
                 <Link to="/register" className="navbar-link register-btn" onClick={() => setIsMenuOpen(false)}>
                   <i className="fas fa-user-plus"></i>
                   <span>Get Started</span>
-                </Link>
-              </>
-            )}
+              </Link>
+            </>
+          )}
           </div>
         </div>
       </div>
@@ -260,6 +261,7 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/users/new" element={<UserManagement />} />
+          <Route path="/admin/users/:userId/edit" element={<UserManagement />} />
           <Route path="/admin/courses" element={<CourseManagement />} />
           <Route path="/admin/courses/new" element={<CourseManagement />} />
           <Route path="/admin/course-interests" element={<CourseInterestManagement />} />
@@ -324,6 +326,7 @@ function App() {
               <Referrals />
             </>
           } />
+
           <Route path="/forgot-password" element={
             <>
               <Navbar />
