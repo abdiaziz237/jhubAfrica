@@ -581,7 +581,7 @@ const AdminDashboard = () => {
                         {stats.totalUsers > 0 ? `${Math.round((stats.activeUsers / stats.totalUsers) * 100)}%` : '0%'}
                       </span>
                     </div>
-                    <div className="metric-stat">
+all                    <div className="metric-stat">
                       <span className="metric-label">Conversion Rate</span>
                       <span className="metric-value">
                         {stats.totalUsers > 0 ? `${Math.round((stats.totalEnrollments / stats.totalUsers) * 100)}%` : '0%'}
