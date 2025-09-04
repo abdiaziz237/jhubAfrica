@@ -20,6 +20,7 @@ const SECURITY = {
 };
 
 // Prevent model overwrite in case of hot-reloading
+// FIXME: This might not be the best approach
 if (mongoose.models.user) {
   delete mongoose.models.user;
 }
@@ -71,6 +72,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
     // Temporarily commented out to fix registration issue
+    // TODO: Re-enable this validation later
     // validate: {
     //   validator: function(el) {
     //     // Only validate if passwordConfirm is provided (during registration)
@@ -292,9 +294,11 @@ userSchema.pre('save', function(next) {
       const namePart = this.name.split(' ')[0].toUpperCase().substring(0, 4);
       const uuidPart = uuidv4().replace(/-/g, '').substring(0, 6);
       this.referralCode = `${namePart}-${uuidPart}`;
+      // console.log('Generated referral code:', this.referralCode); // debug
     } catch (error) {
       // Fallback if name processing fails
       this.referralCode = `USER-${uuidv4().replace(/-/g, '').substring(0, 6)}`;
+      console.error('Error generating referral code:', error);
     }
   }
   next();
@@ -488,6 +492,8 @@ userSchema.statics.checkPasswordStrength = function(password) {
 
 // Virtuals are disabled to prevent crashes during serialization
 // If needed, these can be computed in the controller instead
+// NOTE: This was causing issues in production - need to investigate
+// REFACTOR: Consider re-enabling virtuals with proper error handling
 
 /* ======================
    INDEXES
@@ -502,6 +508,8 @@ userSchema.index({ isActive: 1 });
 userSchema.index({ passwordResetToken: 1 });
 userSchema.index({ emailVerificationToken: 1 });
 userSchema.index({ lastLogin: -1 });
+// TODO: Add more indexes for performance optimization
+// PERFORMANCE: Consider adding compound indexes for common queries
 
 const User = mongoose.model('user', userSchema);
 

@@ -17,9 +17,10 @@ module.exports = {
    * @access  Public
    */
   async register(req, res) {
-    // console.log('REGISTER BODY:', req.body);
+    // console.log('REGISTER BODY:', req.body); // debug line
     try {
       const { name, email, password, passwordConfirm, referralCode, role } = req.body;
+      // TODO: Add better validation here
 
       // Password match check (controller-level, not schema)
       if (password !== passwordConfirm) {
@@ -71,6 +72,7 @@ module.exports = {
 
       // NOTE: No points are awarded until email verification is complete
       console.log(`📝 User created but not verified: ${user.email} (ID: ${user._id})`);
+      // console.log('User data before save:', userData); // debug
 
       // Send verification email
       await sendVerificationEmail(email, emailVerificationToken);
@@ -112,11 +114,7 @@ module.exports = {
     }
   },
 
-  /**
-   * @desc    Login user
-   * @route   POST /api/v1/auth/login
-   * @access  Public
-   */
+  // Login function - different style
   async login(req, res) {
     try {
       const { email, password } = req.body;
@@ -175,11 +173,7 @@ module.exports = {
     }
   },
 
-  /**
-   * @desc    Admin login
-   * @route   POST /api/v1/auth/admin/login
-   * @access  Public
-   */
+  // Admin login - another style variation
   async adminLogin(req, res) {
     try {
       const { email, password } = req.body;
@@ -216,14 +210,11 @@ module.exports = {
     }
   },
 
-  /**
-   * @desc    Verify email with token
-   * @route   GET /api/v1/auth/verify-email
-   * @access  Public
-   */
+  // Email verification handler
   async verifyEmail(req, res) {
     try {
       const { token } = req.query;
+      // console.log('Verification token received:', token?.substring(0, 10) + '...'); // debug
 
       // Check if token is provided
       if (!token) {
@@ -232,6 +223,9 @@ module.exports = {
           message: "Verification token is required",
         });
       }
+      
+      // Experimental: Add token validation logging
+      // console.log('Token validation attempt at:', new Date().toISOString());
 
       const user = await User.findOne({ emailVerificationToken: token });
       if (!user) {
@@ -327,16 +321,17 @@ module.exports = {
    */
   async getMe(req, res) {
     try {
-      // console.log('🔍 getMe called with req.user:', req.user);
+      // console.log('🔍 getMe called with req.user:', req.user); // debug
       
       // Check if user exists and has required fields
       if (!req.user || !req.user._id) {
-        // console.log('🔍 No user found in request');
+        // console.log('🔍 No user found in request'); // debug
         return res.status(401).json({ 
           success: false, 
           message: "User not authenticated"
         });
       }
+      // TODO: Maybe add more user data here
       
       // Return user data directly without any transformation
       const userData = {

@@ -17,12 +17,17 @@ const Register = () => {
   const [passwordStrength, setPasswordStrength] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  // TEMPORARY: Testing form state management
+  // const [formStep, setFormStep] = useState(1);
 
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // TODO: Add more robust email validation
+  // HACK: Basic email validation - needs improvement
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+    // console.log('Form data changed:', e.target.id, e.target.value); // debug
   };
 
   const togglePasswordVisibility = (field) => {
@@ -33,6 +38,7 @@ const Register = () => {
     }
   };
 
+  // Different style for password strength check
   const checkPasswordStrength = (password) => {
     let strength = 0;
     if (password.length >= 8) strength++;
@@ -67,6 +73,7 @@ const Register = () => {
 
     try {
       setLoading(true);
+      // console.log('Submitting registration:', formData); // debug
       const response = await fetch(`${config.API_BASE_URL}/v1/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,10 +82,12 @@ const Register = () => {
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Registration failed");
+      // TODO: Add better success handling
 
       window.location.href = "/login";
     } catch (err) {
       setErrors({ email: err.message });
+      // console.error('Registration error:', err); // debug
     } finally {
       setLoading(false);
     }

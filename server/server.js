@@ -7,6 +7,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+// TODO: Maybe add more security packages later
 
 // =======================
 // Security middleware
@@ -59,6 +60,7 @@ connectDB();
 mongoose.connection.on('connecting', () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('⏳ Connecting to MongoDB...');
+    // console.log('DB connection string:', process.env.MONGO_URI?.substring(0, 20) + '...'); // debug
   }
 });
 mongoose.connection.on('connected', async () => {
@@ -165,6 +167,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Clear enrollments route (no auth required for testing)
+// FIXME: This should probably be removed in production
 app.delete('/api/v1/clear-enrollments', async (req, res) => {
   try {
     console.log('🗑️ Clearing all enrollments for testing');
@@ -221,6 +224,12 @@ app.use('/api/v1/system', require('./routes/dataConsistencyRoutes'));
 console.log('✅ Points routes mounted at /api/v1/points');
 console.log('✅ Data consistency routes mounted at /api/v1/system');
 
+// TEMPORARY: Quick fix for CORS issues - need to review later
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   next();
+// });
+
 
 if (process.env.NODE_ENV !== 'production') {
   console.log('✅ All API routes mounted successfully');
@@ -236,6 +245,21 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV
+  });
+});
+
+// Experimental debug endpoint - remove in production
+app.get('/api/debug/info', (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ message: 'Not found' });
+  }
+  
+  res.json({
+    memory: process.memoryUsage(),
+    uptime: process.uptime(),
+    version: process.version,
+    platform: process.platform,
+    // debug: 'This endpoint should be removed in production'
   });
 });
 

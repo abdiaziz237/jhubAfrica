@@ -28,7 +28,7 @@ import ResetPassword from "./components/ResetPassword/ResetPassword";
 import VerificationStatus from "./components/VerificationStatus/VerificationStatus";
 import ErrorBoundary from "./components/ErrorBoundary/ErrorBoundary";
 
-// Professional Home Page
+// Home page component - still working on the design
 function Home() {
   return (
     <div className="home-container">
@@ -45,6 +45,7 @@ function Home() {
             Unlock your potential with industry-leading courses that open doors to global opportunities. 
             Master in-demand skills and earn credentials that employers worldwide recognize and value.
           </p>
+          {/* TODO: Add more compelling copy here */}
           <div className="hero-stats">
             <div className="stat-item">
               <span className="stat-number">500+</span>
@@ -151,7 +152,7 @@ function Home() {
   );
 }
 
-// Navbar component
+// Navbar component - might need refactoring later
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
@@ -160,6 +161,7 @@ function Navbar() {
     // Check if user is logged in
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
+    // console.log('Navbar: User logged in?', !!token); // debug line
   }, []);
 
   const toggleMenu = () => {
@@ -246,13 +248,17 @@ function Navbar() {
   );
 }
 
-// Main App
+// Main App component
 function App() {
+  // Experimental feature - might remove later
+  // const [experimentalFeature, setExperimentalFeature] = useState(false);
+  
   return (
     <ErrorBoundary>
       <Router>
         <Routes>
           {/* Admin routes - NO navigation bar - MUST come first */}
+          {/* FIXME: These routes might need better organization */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<UserManagement />} />

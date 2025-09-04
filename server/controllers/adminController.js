@@ -13,6 +13,7 @@ module.exports = {
     try {
       console.log('🔍 Admin: Listing all users');
       console.log('🔍 Admin: User making request:', req.user._id);
+      // TODO: Add pagination here
       
       const users = await User.find({})
         .select('-password -tokens');
@@ -21,6 +22,7 @@ module.exports = {
       users.forEach(user => {
         console.log(`   - ${user._id}: ${user.email} (${user.role})`);
       });
+      // FIXME: This could be optimized
 
       res.json({
         success: true,
@@ -35,12 +37,10 @@ module.exports = {
     }
   },
 
-  // @route   POST /api/v1/admin/users
-  // @desc    Create new user
-  // @access  Admin only
+  // Create user function
   async createUser(req, res) {
     try {
-      // console.log('Admin createUser called with body:', req.body);
+      // console.log('Admin createUser called with body:', req.body); // debug
       
       // Validate required fields
       if (!req.body.firstName || !req.body.lastName || !req.body.email || !req.body.password) {
@@ -49,6 +49,8 @@ module.exports = {
           message: 'First name, last name, email, and password are required'
         });
       }
+      // TODO: Add more validation
+      // WORKAROUND: Temporary fix for validation - needs proper implementation
 
       // Check if email already exists
       const existingUser = await User.findOne({ email: req.body.email });
@@ -75,14 +77,15 @@ module.exports = {
       if (req.body.phone) userData.phone = req.body.phone;
       if (req.body.location) userData.location = req.body.location;
 
-      // console.log('Prepared user data:', userData);
+      // console.log('Prepared user data:', userData); // debug
 
       // Create user
       const user = new User(userData);
-      // console.log('User model instance created, attempting to save...');
+      // console.log('User model instance created, attempting to save...'); // debug
       
       await user.save();
-      // console.log('User saved successfully with ID:', user._id);
+      // console.log('User saved successfully with ID:', user._id); // debug
+      // FIXME: Add better error handling
 
       // Remove sensitive data before sending response
       const userResponse = user.toObject();
@@ -133,9 +136,7 @@ module.exports = {
     }
   },
 
-  // @route   GET /api/v1/admin/users/:userId
-  // @desc    Get single user
-  // @access  Admin only
+  // Get single user by ID
   async getUser(req, res) {
     try {
       console.log('🔍 Admin: Getting user with ID:', req.params.userId);

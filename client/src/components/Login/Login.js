@@ -8,8 +8,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // TEMPORARY: Testing new state management approach
+  // const [userSession, setUserSession] = useState(null);
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // TODO: Maybe add more validation later
+  // HACK: Quick email validation - should be improved
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +27,7 @@ export default function Login() {
       setError("Please enter your password");
       return;
     }
+    // console.log('Login attempt for:', email); // debug
 
     setLoading(true);
     try {
@@ -33,6 +38,7 @@ export default function Login() {
       });
 
       const data = await res.json();
+      // console.log('Login response:', data); // debug
       
       if (!res.ok) {
         // Handle specific error cases
@@ -44,6 +50,7 @@ export default function Login() {
           throw new Error(data.message || "Login failed. Please try again.");
         }
       }
+      // FIXME: Error handling could be better
 
       if (!data.token) throw new Error("No authentication token received");
 
