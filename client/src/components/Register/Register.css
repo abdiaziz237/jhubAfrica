@@ -187,10 +187,11 @@
 
 .auth-welcome h1 {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 600;
   color: #1a202c;
   margin: 0 0 0.5rem 0;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .auth-welcome p {
@@ -230,15 +231,20 @@
   border-radius: 12px;
   font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: white;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   color: #2d3748;
 }
 
 .form-control:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 
+    0 0 0 4px rgba(102, 126, 234, 0.1),
+    0 4px 12px rgba(102, 126, 234, 0.15);
+  background: rgba(255, 255, 255, 0.95);
   transform: translateY(-1px);
+  backdrop-filter: blur(15px);
 }
 
 .form-control::placeholder {
@@ -276,22 +282,23 @@ select.form-control {
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #a0aec0;
+  color: #64748b;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
-  min-width: 2rem;
-  min-height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.125rem;
 }
 
 .password-toggle:hover {
   color: #667eea;
-  background: #f7fafc;
+  background: rgba(102, 126, 234, 0.1);
   transform: translateY(-50%) scale(1.05);
 }
 

@@ -40,10 +40,10 @@
     transform: translateY(0px) rotate(0deg);
   }
   33% {
-    transform: translateY(-20px) rotate(1deg);
+    transform: translateY(-15px) rotate(0.5deg);
   }
   66% {
-    transform: translateY(10px) rotate(-1deg);
+    transform: translateY(8px) rotate(-0.3deg);
   }
 }
 
@@ -96,16 +96,17 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-size: 2.5rem;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .admin-dashboard-title p {
-  margin: 10px 0 0 0;
+  margin: 8px 0 0 0;
   color: #64748b;
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-weight: 400;
 }
 
 .admin-dashboard-actions {
@@ -209,8 +210,8 @@
 }
 
 .admin-btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
 }
 
 .admin-btn.primary:hover::before {
@@ -486,11 +487,11 @@
 }
 
 .stat-card:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-6px) scale(1.01);
   box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border-color: rgba(255, 255, 255, 0.5);
+    0 15px 35px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .stat-card:hover::before {
@@ -588,6 +589,7 @@
   color: #0f172a;
   font-size: 1.25rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .chart-content {
@@ -738,9 +740,9 @@
 }
 
 .admin-tab:hover {
-  background: rgba(102, 126, 234, 0.15);
+  background: rgba(102, 126, 234, 0.12);
   color: #4f46e5;
-  transform: translateY(-2px);
+  transform: translateY(-1px) scale(1.01);
   font-weight: 600;
 }
 

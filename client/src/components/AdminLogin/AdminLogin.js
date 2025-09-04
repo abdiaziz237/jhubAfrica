@@ -10,6 +10,7 @@ export default function AdminLogin() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -53,12 +54,13 @@ export default function AdminLogin() {
     <div className="admin-login-container">
       <div className="admin-login-card">
         <div className="admin-login-header">
-          <h1>🔐 Admin Login</h1>
-          <p>Access JHUB Africa Administration Panel</p>
+          <h1>Admin Portal</h1>
+          <p>Secure access to JHUB Africa Administration Panel</p>
         </div>
 
         {error && (
           <div className="admin-login-error">
+            <span>⚠️</span>
             {error}
           </div>
         )}
@@ -80,16 +82,26 @@ export default function AdminLogin() {
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Enter your password"
-              className="form-input"
-            />
+            <div className="password-input-container">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Enter your password"
+                className="form-input password-input"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex="-1"
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
 
           <button
@@ -102,7 +114,7 @@ export default function AdminLogin() {
         </form>
 
         <div className="admin-login-footer">
-          <p>🔒 Secure access only for authorized administrators</p>
+          <p>🔒 Authorized administrators only</p>
         </div>
       </div>
     </div>
